@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useClients } from '@/hooks/useClients';
 import { usePartners } from '@/hooks/usePartners';
 import { Task } from '@/hooks/useTasks';
-import { Trash2, CalendarClock, AlignLeft, User, Briefcase, Edit } from 'lucide-react';
+import { Trash2, CalendarClock, AlignLeft, User, Briefcase, Edit, Send } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { format as formatTz } from 'date-fns-tz';
@@ -41,6 +41,11 @@ export function TaskFormModal({ task, isOpen, onClose, onSubmit, onDelete, isPen
   const { data: clients = [] } = useClients();
   const { data: partners = [] } = usePartners();
   
+  // Estados para Avances
+  const [updates, setUpdates] = useState<any[]>([]);
+  const [newUpdate, setNewUpdate] = useState('');
+  const [isSendingUpdate, setIsSendingUpdate] = useState(false);
+
   const getDefaultTimes = (selected?: Date) => {
     if (selected) {
       const dateStr = format(selected, 'yyyy-MM-dd');
@@ -103,6 +108,39 @@ export function TaskFormModal({ task, isOpen, onClose, onSubmit, onDelete, isPen
     setIsEditingFull(initialEditMode || false);
   }, [task, isOpen, selectedDate, initialEditMode]);
 
+  // Cargar Avances al abrir vista de resumen
+  useEffect(() => {
+    if (task?.id && isOpen && !isEditingFull) {
+      fetch(`/api/tasks/${task.id}/updates`)
+        .then(res => res.json())
+        .then(data => {
+          if (Array.isArray(data)) setUpdates(data);
+        })
+        .catch(console.error);
+    }
+  }, [task?.id, isOpen, isEditingFull]);
+
+  const handleSendUpdate = async () => {
+    if (!newUpdate.trim() || !task?.id) return;
+    setIsSendingUpdate(true);
+    try {
+      const res = await fetch(`/api/tasks/${task.id}/updates`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ content: newUpdate })
+      });
+      if (res.ok) {
+        const addedUpdate = await res.json();
+        setUpdates([addedUpdate, ...updates]);
+        setNewUpdate('');
+      }
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsSendingUpdate(false);
+    }
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onSubmit({
@@ -143,7 +181,7 @@ export function TaskFormModal({ task, isOpen, onClose, onSubmit, onDelete, isPen
 
   return (
     <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-[450px] rounded-[2rem]">
+      <DialogContent className="sm:max-w-[450px] rounded-[2rem] max-h-[90vh] overflow-y-auto no-scrollbar">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold">
             {isEditMode && !isEditingFull ? 'Resumen de la Tarea' : isEditMode ? 'Editar Tarea' : 'Nueva Tarea'}
@@ -197,6 +235,54 @@ export function TaskFormModal({ task, isOpen, onClose, onSubmit, onDelete, isPen
                   <div className="flex items-center gap-3 text-sm text-zinc-700">
                     <Briefcase className="w-4 h-4 text-purple-500 shrink-0" />
                     <p><span className="font-semibold text-zinc-900">Cliente:</span> {selectedClient.name}</p>
+                  </div>
+                )}
+              </div>
+
+              {/* REPORTE DE AVANCES */}
+              <div className="mt-6 space-y-3">
+                <h4 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                  <Send className="w-4 h-4 text-blue-500" />
+                  Reporte de Avances
+                </h4>
+                
+                <div className="flex gap-2">
+                  <textarea 
+                    className="flex-1 min-h-[80px] p-3 text-sm rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                    placeholder="Escribe el avance para enviarlo por Telegram..."
+                    value={newUpdate}
+                    onChange={(e) => setNewUpdate(e.target.value)}
+                    disabled={isSendingUpdate}
+                  />
+                </div>
+                <Button 
+                  type="button" 
+                  onClick={handleSendUpdate} 
+                  disabled={!newUpdate.trim() || isSendingUpdate}
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-9 text-sm"
+                >
+                  {isSendingUpdate ? 'Enviando a Telegram...' : 'Enviar Avance'}
+                </Button>
+
+                {updates.length > 0 && (
+                  <div className="mt-4 space-y-3 max-h-[200px] overflow-y-auto pr-1 no-scrollbar">
+                    {updates.map((upd) => (
+                      <div key={upd.id} className="bg-zinc-50 border border-zinc-100 rounded-xl p-3 text-sm">
+                        <p className="text-zinc-700 mb-2">{upd.content}</p>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="text-zinc-400 font-mono">
+                            {format(new Date(upd.createdAt), 'dd/MM/yyyy HH:mm')}
+                          </span>
+                          <span className={`px-2 py-1 rounded-full font-medium ${
+                            upd.status === 'Aprobado' ? 'bg-emerald-100 text-emerald-700' :
+                            upd.status === 'Con Cambios' ? 'bg-red-100 text-red-700' :
+                            'bg-amber-100 text-amber-700'
+                          }`}>
+                            {upd.status === 'Aprobado' ? '✅ Aprobado' : upd.status === 'Con Cambios' ? '❌ Con Cambios' : '⏳ Pendiente'}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 )}
               </div>
@@ -270,7 +356,7 @@ export function TaskFormModal({ task, isOpen, onClose, onSubmit, onDelete, isPen
           )}
 
           <div className="space-y-2 pt-2">
-            <Label>{isEditMode ? 'Actualizar Estado' : 'Estado de la Tarea'}</Label>
+            <Label>{isEditMode && isEditingFull ? 'Actualizar Estado' : !isEditMode ? 'Estado de la Tarea' : 'Actualizar Estado de la Tarea'}</Label>
             <Select value={formData.status} onValueChange={v => setFormData({...formData, status: v})}>
               <SelectTrigger className="border-blue-200 bg-blue-50/50"><SelectValue /></SelectTrigger>
               <SelectContent>
