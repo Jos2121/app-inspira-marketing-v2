@@ -17,9 +17,8 @@ export type Session = {
 
 export async function getSession(event: H3Event): Promise<Session> {
   try {
-    const request = event.request;
     const sessionData = await auth.api.getSession({
-      headers: request.headers
+      headers: event.node.req.headers as any
     });
     
     if (!sessionData?.user) return null;
