@@ -3,7 +3,6 @@ import { appRoles, partners } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from './auth';
 import { H3Event } from 'nitro';
-import { toWebRequest } from 'h3';
 
 export type Session = {
   user: {
@@ -18,7 +17,7 @@ export type Session = {
 
 export async function getSession(event: H3Event): Promise<Session> {
   try {
-    const request = toWebRequest(event);
+    const request = event.request;
     const sessionData = await auth.api.getSession({
       headers: request.headers
     });
