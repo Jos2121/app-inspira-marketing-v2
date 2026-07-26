@@ -1,6 +1,6 @@
 import { defineHandler } from 'nitro';
-import { createError, getRequestHeader, getRequestURL } from 'nitro/h3';
-import { getSessionFromCookie } from '../utils/session';
+import { createError, getRequestURL } from 'nitro/h3';
+import { getSession } from '../utils/session';
 
 const PUBLIC_PREFIXES = ['/api/auth/', '/auth/'];
 
@@ -16,8 +16,7 @@ export default defineHandler(async (event) => {
     return;
   }
   
-  const cookie = getRequestHeader(event, 'cookie') ?? null;
-  const session = await getSessionFromCookie(cookie);
+  const session = await getSession(event);
   
   if (!session?.user) {
     throw createError({ statusCode: 401, statusMessage: 'Unauthorized' });
@@ -28,9 +27,7 @@ export default defineHandler(async (event) => {
   const isSuperadmin = role === 'SUPERADMIN' || accessibleTabs.includes('*');
   const method = event.method;
 
-  // RBAC por módulos API
   if (!isSuperadmin) {
-    // Permitir lectura (GET) de staff para dropdowns de tareas, bloquear modificaciones (POST, PUT, DELETE)
     if (pathname.startsWith('/api/partners') && method !== 'GET') {
       throw createError({ statusCode: 403, statusMessage: 'No tienes permiso para modificar el staff' });
     }

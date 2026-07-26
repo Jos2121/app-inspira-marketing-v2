@@ -1,12 +1,9 @@
-import { createAuthClient } from '@neondatabase/auth';
-import { BetterAuthReactAdapter } from '@neondatabase/auth/react/adapters';
+import { createAuthClient } from 'better-auth/react';
 
-const baseURL = typeof window !== 'undefined' 
-  ? `${window.location.origin}/api/auth` 
-  : 'http://localhost/api/auth';
-
-export const authClient = createAuthClient(baseURL, {
-  adapter: BetterAuthReactAdapter(),
+export const authClient = createAuthClient({
+  baseURL: typeof window !== 'undefined' 
+    ? window.location.origin 
+    : 'http://localhost:8080'
 });
 
 type SessionState = {
