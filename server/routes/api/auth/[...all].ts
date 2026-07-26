@@ -1,5 +1,5 @@
 import { defineHandler } from 'nitro';
-import { toWebRequest } from 'nitro/h3';
+import { toWebRequest } from 'h3';
 import { auth } from '../../../utils/auth';
 
 export default defineHandler(async (event) => {

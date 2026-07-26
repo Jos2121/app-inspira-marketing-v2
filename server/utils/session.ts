@@ -3,7 +3,7 @@ import { appRoles, partners } from '../db/schema';
 import { eq } from 'drizzle-orm';
 import { auth } from './auth';
 import { H3Event } from 'nitro';
-import { toWebRequest } from 'nitro/h3';
+import { toWebRequest } from 'h3';
 
 export type Session = {
   user: {
