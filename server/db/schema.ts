@@ -171,6 +171,17 @@ export const workflowTasks = pgTable('workflow_tasks', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
+// --- TABLA DE AVANCES DE TAREAS (TELEGRAM) ---
+export const taskUpdates = pgTable('task_updates', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  taskId: uuid('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
+  content: text('content').notNull(),
+  telegramMessageId: text('telegram_message_id'),
+  status: text('status').notNull().default('Pendiente'),
+  feedbackMessage: text('feedback_message'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
 export const goalsRelations = relations(goals, ({ one, many }) => ({
   client: one(clients, { fields: [goals.clientId], references: [clients.id] }),
   dailyLogs: many(dailyLogs),
@@ -180,9 +191,14 @@ export const dailyLogsRelations = relations(dailyLogs, ({ one }) => ({
   goal: one(goals, { fields: [dailyLogs.goalId], references: [goals.id] }),
 }));
 
-export const tasksRelations = relations(tasks, ({ one }) => ({
+export const tasksRelations = relations(tasks, ({ one, many }) => ({
   partner: one(partners, { fields: [tasks.partnerId], references: [partners.id] }),
   client: one(clients, { fields: [tasks.clientId], references: [clients.id] }),
+  updates: many(taskUpdates),
+}));
+
+export const taskUpdatesRelations = relations(taskUpdates, ({ one }) => ({
+  task: one(tasks, { fields: [taskUpdates.taskId], references: [tasks.id] }),
 }));
 
 export const complianceRecordsRelations = relations(complianceRecords, ({ one }) => ({
