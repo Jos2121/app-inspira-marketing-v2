@@ -15,7 +15,6 @@ export const auth = betterAuth({
   },
   advanced: {
     ipAddress: {
-      trustedProxies: true,
       ipAddressHeaders: ["x-forwarded-for", "x-real-ip"]
     }
   }
