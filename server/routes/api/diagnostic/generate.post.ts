@@ -70,6 +70,14 @@ export default defineHandler(async (event) => {
 
   } catch (error: any) {
     console.error("Error en API de Diagnóstico:", error);
+    
+    if (error.statusCode === 429 || error.status === 429) {
+      throw createError({ 
+        statusCode: 429, 
+        message: 'La Inteligencia Artificial está saturada en este momento. Por favor, intenta generar el reporte de nuevo en un minuto.' 
+      });
+    }
+
     throw createError({ 
       statusCode: error.statusCode || 500, 
       message: error.message || 'Error interno al comunicarse con la IA' 

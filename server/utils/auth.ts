@@ -13,4 +13,10 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
   },
+  advanced: {
+    ipAddress: {
+      trustedProxies: true,
+      ipAddressHeaders: ["x-forwarded-for", "x-real-ip"]
+    }
+  }
 });
