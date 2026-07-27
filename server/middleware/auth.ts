@@ -2,7 +2,7 @@ import { defineHandler } from 'nitro';
 import { createError, getRequestURL } from 'nitro/h3';
 import { getSession } from '../utils/session';
 
-const PUBLIC_PREFIXES = ['/api/auth/', '/auth/'];
+const PUBLIC_PREFIXES = ['/api/auth/', '/auth/', '/api/telegram/'];
 
 export default defineHandler(async (event) => {
   const url = getRequestURL(event);
