@@ -43,6 +43,7 @@ export default defineHandler(async (event) => {
       '/api/clients': '/clients',
       '/api/diagnostic': '/diagnostic',
       '/api/workflows': '/workflows',
+      '/api/ai': '/ai',
     };
 
     for (const [apiPath, tabId] of Object.entries(routeMap)) {

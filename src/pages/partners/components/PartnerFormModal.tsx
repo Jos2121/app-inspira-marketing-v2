@@ -25,6 +25,7 @@ const APP_MODULES = [
   { id: '/workflows', label: 'Flujos de Trabajo' },
   { id: '/clients', label: 'Directorio de Clientes' },
   { id: '/diagnostic', label: 'Auditorías y Diagnósticos' },
+  { id: '/ai', label: 'IA Generativa' },
 ];
 
 export function PartnerFormModal({ partner, isOpen, onClose, onSubmit, isPending }: PartnerFormModalProps) {

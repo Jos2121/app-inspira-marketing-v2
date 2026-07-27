@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Target, Wallet, PanelLeftClose, PanelLeft, UserSquare2, CalendarDays, ShieldCheck, Activity, Network } from 'lucide-react';
+import { LayoutDashboard, Users, Target, Wallet, PanelLeftClose, PanelLeft, UserSquare2, CalendarDays, ShieldCheck, Activity, Network, Sparkles } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -14,6 +14,7 @@ export const navItems = [
   { icon: Network, label: 'Flujos de Trabajo', path: '/workflows' },
   { icon: Users, label: 'Clientes', path: '/clients' },
   { icon: Activity, label: 'Diagnóstico', path: '/diagnostic' },
+  { icon: Sparkles, label: 'IA Generativa', path: '/ai' },
   { icon: UserSquare2, label: 'Staff / Administradores', path: '/partners', adminOnly: true },
 ];
 
