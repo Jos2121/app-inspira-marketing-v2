@@ -281,6 +281,12 @@ export function TaskFormModal({ task, isOpen, onClose, onSubmit, onDelete, isPen
                             {upd.status === 'Aprobado' ? '✅ Aprobado' : upd.status === 'Con Cambios' ? '❌ Con Cambios' : '⏳ Pendiente'}
                           </span>
                         </div>
+                        {upd.status === 'Con Cambios' && upd.feedbackMessage && (
+                          <div className="mt-3 p-2 bg-red-50 border border-red-100 rounded-lg text-sm text-red-900 flex items-start gap-2">
+                            <div className="font-bold shrink-0 mt-0.5">💬 Feedback:</div>
+                            <div className="whitespace-pre-wrap">{upd.feedbackMessage}</div>
+                          </div>
+                        )}
                       </div>
                     ))}
                   </div>
