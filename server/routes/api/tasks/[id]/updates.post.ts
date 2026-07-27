@@ -13,24 +13,32 @@ export default defineHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Faltan datos requeridos' });
   }
 
-  // Guardar en la base de datos
+  // 1. Guardar el avance en la base de datos
   const [newUpdate] = await db.insert(taskUpdates).values({
     taskId,
     content,
     status: 'Pendiente'
   }).returning();
 
-  // Obtener nombre de la tarea para el mensaje
+  // 2. Obtener la tarea junto con su cliente y responsable (partner)
   const task = await db.query.tasks.findFirst({
-    where: eq(tasks.id, taskId)
+    where: eq(tasks.id, taskId),
+    with: {
+      client: true,
+      partner: true
+    }
   });
 
-  // Enviar a Telegram
+  // 3. Configurar y enviar a Telegram
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
   const chatId = process.env.TELEGRAM_CHAT_ID;
 
   if (botToken && chatId) {
-    const message = `📋 *Nuevo Avance de Tarea*\n\n*Tarea:* ${task?.title}\n*Avance:* ${content}\n\n¿Apruebas este avance?`;
+    const clientName = task?.client?.name || 'No especificado';
+    const partnerName = task?.partner?.name || 'Sin asignar';
+
+    const message = `📋 *Nuevo Avance de Tarea*\n\n📌 *Tarea:* ${task?.title || 'Sin título'}\n👤 *Cliente:* ${clientName}\n👥 *Asignado a:* ${partnerName}\n\n💬 *Avance:* ${content}\n\n¿Apruebas este avance?`;
+
     const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
     
     try {
