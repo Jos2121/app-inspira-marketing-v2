@@ -59,8 +59,17 @@ export function PartnerList({ partners, isLoading, onEdit, onDelete }: PartnerLi
               paginatedPartners.map(partner => (
                 <TableRow key={partner.id} className="hover:bg-zinc-50/50 transition-colors">
                   <TableCell>
-                    <div className="font-semibold text-zinc-900">{partner.name}</div>
-                    <div className="text-sm text-zinc-500">{partner.role}</div>
+                    <div className="flex items-center gap-3">
+                      <div 
+                        className="w-3.5 h-3.5 rounded-full shrink-0 shadow-[inset_0_1px_2px_rgba(0,0,0,0.2)] border border-black/5"
+                        style={{ backgroundColor: partner.color || '#3b82f6' }}
+                        title={`Color: ${partner.color || '#3b82f6'}`}
+                      />
+                      <div>
+                        <div className="font-semibold text-zinc-900">{partner.name}</div>
+                        <div className="text-sm text-zinc-500">{partner.role}</div>
+                      </div>
+                    </div>
                   </TableCell>
                   <TableCell className="font-mono text-sm text-zinc-600">{partner.phone || '-'}</TableCell>
                   <TableCell className="text-sm text-zinc-600">{partner.email || '-'}</TableCell>

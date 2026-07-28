@@ -10,6 +10,7 @@ export type Partner = {
   status: string;
   systemRole: string;
   accessibleTabs: string[];
+  color: string;
   createdAt: string;
 };
 

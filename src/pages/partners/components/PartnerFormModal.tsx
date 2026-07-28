@@ -5,8 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, ShieldCheck } from 'lucide-react';
+import { Plus, ShieldCheck, Palette } from 'lucide-react';
 import { Partner } from '@/hooks/usePartners';
+import { cn } from '@/lib/utils';
 
 interface PartnerFormModalProps {
   partner?: Partner | null;
@@ -27,6 +28,11 @@ const APP_MODULES = [
   { id: '/diagnostic', label: 'Auditorías y Diagnósticos' },
 ];
 
+const PRESET_COLORS = [
+  '#3b82f6', '#10b981', '#8b5cf6', '#f97316', 
+  '#ef4444', '#ec4899', '#eab308', '#06b6d4'
+];
+
 export function PartnerFormModal({ partner, isOpen, onClose, onSubmit, isPending }: PartnerFormModalProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = isOpen !== undefined ? isOpen : internalOpen;
@@ -39,7 +45,8 @@ export function PartnerFormModal({ partner, isOpen, onClose, onSubmit, isPending
     password: '',
     status: 'Activo',
     systemRole: 'ADMIN',
-    accessibleTabs: [] as string[]
+    accessibleTabs: [] as string[],
+    color: '#3b82f6'
   });
 
   useEffect(() => {
@@ -52,10 +59,11 @@ export function PartnerFormModal({ partner, isOpen, onClose, onSubmit, isPending
         password: '',
         status: partner.status || 'Activo',
         systemRole: partner.systemRole || 'ADMIN',
-        accessibleTabs: partner.accessibleTabs || []
+        accessibleTabs: partner.accessibleTabs || [],
+        color: partner.color || '#3b82f6'
       });
     } else {
-      setFormData({ name: '', role: '', phone: '', email: '', password: '', status: 'Activo', systemRole: 'ADMIN', accessibleTabs: [] });
+      setFormData({ name: '', role: '', phone: '', email: '', password: '', status: 'Activo', systemRole: 'ADMIN', accessibleTabs: [], color: '#3b82f6' });
     }
   }, [partner, open]);
 
@@ -165,6 +173,38 @@ export function PartnerFormModal({ partner, isOpen, onClose, onSubmit, isPending
               />
             </div>
           )}
+
+          <div className="space-y-3">
+            <Label className="flex items-center gap-2">
+              <Palette className="w-4 h-4 text-zinc-500" /> Color de Identificación
+            </Label>
+            <div className="flex flex-wrap items-center gap-3 bg-zinc-50/50 p-3 rounded-xl border border-zinc-200/60">
+              <div className="relative group">
+                <Input
+                  type="color"
+                  value={formData.color}
+                  onChange={e => setFormData({...formData, color: e.target.value})}
+                  className="w-10 h-10 p-0 border-0 rounded-lg cursor-pointer overflow-hidden shadow-sm"
+                />
+              </div>
+              <div className="h-6 w-px bg-zinc-200 mx-1"></div>
+              <div className="flex flex-wrap gap-2">
+                {PRESET_COLORS.map(c => (
+                  <button
+                    key={c}
+                    type="button"
+                    className={cn(
+                      "w-7 h-7 rounded-full transition-all duration-200 shadow-sm border-[3px]",
+                      formData.color === c ? "border-zinc-900 scale-110" : "border-transparent hover:scale-110"
+                    )}
+                    style={{ backgroundColor: c }}
+                    onClick={() => setFormData({...formData, color: c})}
+                    title={c}
+                  />
+                ))}
+              </div>
+            </div>
+          </div>
 
           <div className="space-y-4 pt-4 border-t border-zinc-100">
             <h4 className="font-bold text-zinc-900 flex items-center gap-2">
