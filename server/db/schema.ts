@@ -182,6 +182,20 @@ export const taskUpdates = pgTable('task_updates', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
+// --- TABLA DE REQUERIMIENTOS ---
+export const requirements = pgTable('requirements', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  content: text('content').notNull(),
+  requesterId: uuid('requester_id').notNull().references(() => partners.id, { onDelete: 'cascade' }),
+  assigneeId: uuid('assignee_id').notNull().references(() => partners.id, { onDelete: 'cascade' }),
+  deadline: text('deadline').notNull(),
+  status: text('status').notNull().default('Pendiente'),
+  telegramMessageId: text('telegram_message_id'),
+  feedbackMessage: text('feedback_message'),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+
 export const goalsRelations = relations(goals, ({ one, many }) => ({
   client: one(clients, { fields: [goals.clientId], references: [clients.id] }),
   dailyLogs: many(dailyLogs),
@@ -217,4 +231,9 @@ export const workflowsRelations = relations(workflows, ({ many }) => ({
 export const workflowTasksRelations = relations(workflowTasks, ({ one }) => ({
   workflow: one(workflows, { fields: [workflowTasks.workflowId], references: [workflows.id] }),
   partner: one(partners, { fields: [workflowTasks.partnerId], references: [partners.id] }),
+}));
+
+export const requirementsRelations = relations(requirements, ({ one }) => ({
+  requester: one(partners, { fields: [requirements.requesterId], references: [partners.id], relationName: 'requirements_requester' }),
+  assignee: one(partners, { fields: [requirements.assigneeId], references: [partners.id], relationName: 'requirements_assignee' }),
 }));
