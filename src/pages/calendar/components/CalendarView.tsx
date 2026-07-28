@@ -30,9 +30,10 @@ interface CalendarViewProps {
   onTaskDelete: (id: string) => void;
   isPending: boolean;
   isDeleting: boolean;
+  children?: React.ReactNode;
 }
 
-export function CalendarView({ tasks, onTaskCreate, onTaskUpdate, onTaskDelete, isPending, isDeleting }: CalendarViewProps) {
+export function CalendarView({ tasks, onTaskCreate, onTaskUpdate, onTaskDelete, isPending, isDeleting, children }: CalendarViewProps) {
   
   const getLimaToday = () => toZonedTime(new Date(), LIMA_TIMEZONE);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -314,6 +315,8 @@ export function CalendarView({ tasks, onTaskCreate, onTaskUpdate, onTaskDelete, 
         </div>
       </div>
       </div>
+
+      {children && children}
 
       {/* Tabla de Historial General */}
       <div className="glass rounded-[2rem] border-zinc-200/60 shadow-sm overflow-hidden p-6 bg-white/50">

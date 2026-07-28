@@ -3,6 +3,7 @@ import { useTasks, useCreateTask, useUpdateTask, useDeleteTask } from '@/hooks/u
 import { useClients } from '@/hooks/useClients';
 import { usePartners } from '@/hooks/usePartners';
 import { CalendarView } from './components/CalendarView';
+import { RequirementsSection } from './components/RequirementsSection';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function CalendarPage() {
@@ -75,7 +76,9 @@ export default function CalendarPage() {
         onTaskDelete={(id) => deleteMutation.mutate(id)}
         isPending={createMutation.isPending || updateMutation.isPending}
         isDeleting={deleteMutation.isPending}
-      />
+      >
+        <RequirementsSection />
+      </CalendarView>
     </div>
   );
 }
