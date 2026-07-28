@@ -63,12 +63,13 @@ export function CalendarView({ tasks, onTaskCreate, onTaskUpdate, onTaskDelete, 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  const getStatusColor = (status: string) => {
+  // Indicador de color según estado
+  const getStatusDotColor = (status: string) => {
     switch(status) {
-      case 'Pendiente': return 'bg-amber-100/95 text-amber-900 border-amber-300';
-      case 'En Proceso': return 'bg-blue-100/95 text-blue-900 border-blue-300';
-      case 'Completada': return 'bg-emerald-100/95 text-emerald-900 border-emerald-300';
-      default: return 'bg-zinc-100/95 text-zinc-900 border-zinc-300';
+      case 'Pendiente': return 'bg-amber-500';
+      case 'En Proceso': return 'bg-blue-500';
+      case 'Completada': return 'bg-emerald-500';
+      default: return 'bg-zinc-500';
     }
   };
 
@@ -257,7 +258,7 @@ export function CalendarView({ tasks, onTaskCreate, onTaskUpdate, onTaskDelete, 
 
           {/* Tareas usando el algoritmo de columnas */}
           <div className="absolute left-20 right-0 top-0 bottom-0 pointer-events-none pr-4">
-            {processedTasks.map(task => {
+            {processedTasks.map((task: any) => {
               const top = task.startMins;
               const height = Math.max(task.rawEndMins - task.startMins, 25);
               const widthPercent = 100 / task.columnCount;
@@ -266,27 +267,34 @@ export function CalendarView({ tasks, onTaskCreate, onTaskUpdate, onTaskDelete, 
               const startDisplay = task.startTime.replace(' ', 'T').split('T')[1]?.substring(0, 5);
               const endDisplay = task.endTime.replace(' ', 'T').split('T')[1]?.substring(0, 5);
 
+              // Color del staff (Por defecto azul si no tiene) y 20 de opacidad (aprox 12%) en HEX.
+              const partnerColor = task.partner?.color || '#3b82f6';
+              const bgColor = `${partnerColor}20`; 
+
               return (
                 <div
                   key={task.id}
                   onClick={(e) => handleTaskClick(e, task)}
-                  className={cn(
-                    "absolute rounded-lg p-2 border shadow-sm cursor-pointer pointer-events-auto transition-transform hover:scale-[1.01] overflow-hidden group flex flex-col",
-                    getStatusColor(task.status)
-                  )}
+                  className="absolute rounded-lg p-2 border shadow-sm cursor-pointer pointer-events-auto transition-transform hover:scale-[1.01] overflow-hidden group flex flex-col"
                   style={{
                     top,
                     height,
                     left: `${leftPercent}%`,
                     width: `calc(${widthPercent}% - 4px)`,
                     marginLeft: '4px',
-                    zIndex: 10 + task.column
+                    zIndex: 10 + task.column,
+                    backgroundColor: bgColor,
+                    borderColor: partnerColor,
                   }}
                 >
-                  <div className="text-xs font-bold truncate leading-tight shrink-0">{task.title}</div>
+                  {/* Punto de estado y título de la tarea (usando el color del Staff) */}
+                  <div className="text-xs font-bold truncate leading-tight shrink-0 flex items-center gap-1.5" style={{ color: partnerColor }}>
+                    <span className={cn("w-2 h-2 rounded-full shrink-0 shadow-sm", getStatusDotColor(task.status))} />
+                    <span className="truncate">{task.title}</span>
+                  </div>
                   
                   {height >= 40 && (
-                    <div className="text-[10px] font-mono font-semibold opacity-70 mt-1 truncate shrink-0">
+                    <div className="text-[10px] font-mono font-semibold opacity-80 mt-1 truncate shrink-0" style={{ color: partnerColor }}>
                       {startDisplay} - {endDisplay}
                     </div>
                   )}
@@ -294,13 +302,13 @@ export function CalendarView({ tasks, onTaskCreate, onTaskUpdate, onTaskDelete, 
                   {height >= 55 && (task.partner?.name || task.client?.name) && (
                     <div className="flex flex-wrap gap-1 mt-1 overflow-hidden">
                       {task.partner?.name && (
-                        <div className="text-[10px] truncate opacity-90 font-medium flex items-center gap-1 bg-white/40 px-1.5 py-0.5 rounded max-w-full">
+                        <div className="text-[10px] truncate opacity-90 font-semibold flex items-center gap-1 bg-white/60 px-1.5 py-0.5 rounded max-w-full" style={{ color: partnerColor }}>
                            <User className="w-3 h-3 shrink-0" />
                            <span className="truncate">{task.partner.name}</span>
                         </div>
                       )}
                       {task.client?.name && (
-                        <div className="text-[10px] truncate opacity-90 font-medium flex items-center gap-1 bg-white/40 px-1.5 py-0.5 rounded max-w-full">
+                        <div className="text-[10px] truncate opacity-90 font-semibold flex items-center gap-1 bg-white/60 px-1.5 py-0.5 rounded max-w-full" style={{ color: partnerColor }}>
                            <Briefcase className="w-3 h-3 shrink-0" />
                            <span className="truncate">{task.client.name}</span>
                         </div>
@@ -362,7 +370,16 @@ export function CalendarView({ tasks, onTaskCreate, onTaskUpdate, onTaskDelete, 
                         {task.title}
                       </TableCell>
                       <TableCell className="text-zinc-600">
-                        {task.partner?.name || '-'}
+                        {task.partner ? (
+                          <div className="flex items-center gap-2">
+                            <div 
+                              className="w-2.5 h-2.5 rounded-full shrink-0 shadow-sm"
+                              style={{ backgroundColor: task.partner.color || '#3b82f6' }}
+                              title={`Color: ${task.partner.color || '#3b82f6'}`}
+                            />
+                            {task.partner.name}
+                          </div>
+                        ) : '-'}
                       </TableCell>
                       <TableCell className="text-zinc-600">
                         {task.client?.name || '-'}
