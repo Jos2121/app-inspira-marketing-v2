@@ -73,6 +73,7 @@ export const partners = pgTable('partners', {
   status: text('status').notNull().default('Activo'),
   systemRole: text('system_role').notNull().default('ADMIN'),
   accessibleTabs: jsonb('accessible_tabs').notNull().$type<string[]>().default([]),
+  color: text('color').default('#3b82f6'),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 

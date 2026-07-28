@@ -38,6 +38,7 @@ export default defineHandler(async (event) => {
     status: body.status || 'Activo',
     systemRole: body.systemRole || 'ADMIN',
     accessibleTabs: body.accessibleTabs || [],
+    color: body.color || '#3b82f6',
   }).returning();
 
   return newPartner;

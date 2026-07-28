@@ -17,6 +17,7 @@ export default defineHandler(async (event) => {
     status: body.status,
     systemRole: body.systemRole,
     accessibleTabs: body.accessibleTabs,
+    color: body.color || '#3b82f6',
   }).where(eq(partners.id, id)).returning();
 
   return updated;
