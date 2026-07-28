@@ -33,10 +33,10 @@ export default defineHandler(async (event) => {
         }).catch(console.error);
 
         // Editar el mensaje original
-        let newText = `${message.text}\n\n*Estado Actualizado:* ${newStatus === 'Aprobado' ? '✅ Aprobado' : '❌ Requiere Cambios'}`;
+        let newText = `${message.text}\n\n<b>Estado Actualizado:</b> ${newStatus === 'Aprobado' ? '✅ Aprobado' : '❌ Requiere Cambios'}`;
         
         if (action === 'reject') {
-          newText += `\n\n💬 *Por favor, responde a este mensaje escribiendo los cambios que solicitas.*`;
+          newText += `\n\n💬 <b>Por favor, responde a este mensaje escribiendo los cambios que solicitas.</b>`;
         }
 
         await fetch(`https://api.telegram.org/bot${botToken}/editMessageText`, {
@@ -46,7 +46,7 @@ export default defineHandler(async (event) => {
             chat_id: message.chat.id,
             message_id: message.message_id,
             text: newText,
-            parse_mode: 'Markdown'
+            parse_mode: 'HTML'
           })
         }).catch(console.error);
       }
@@ -77,7 +77,7 @@ export default defineHandler(async (event) => {
           chat_id: body.message.chat.id,
           reply_to_message_id: body.message.message_id,
           text: `✅ Feedback recibido y guardado en la plataforma.`,
-          parse_mode: 'Markdown'
+          parse_mode: 'HTML'
         })
       }).catch(console.error);
     }

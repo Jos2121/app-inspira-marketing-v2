@@ -37,7 +37,7 @@ export default defineHandler(async (event) => {
     const clientName = task?.client?.name || 'No especificado';
     const partnerName = task?.partner?.name || 'Sin asignar';
 
-    const message = `📋 *Nuevo Avance de Tarea*\n\n📌 *Tarea:* ${task?.title || 'Sin título'}\n👤 *Cliente:* ${clientName}\n👥 *Asignado a:* ${partnerName}\n\n💬 *Avance:* ${content}\n\n¿Apruebas este avance?`;
+    const message = `📋 <b>Nuevo Avance de Tarea</b>\n\n📌 <b>Tarea:</b> ${task?.title || 'Sin título'}\n👤 <b>Cliente:</b> ${clientName}\n👥 <b>Asignado a:</b> ${partnerName}\n\n💬 <b>Avance:</b> ${content}\n\n¿Apruebas este avance?`;
 
     const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
     
@@ -48,7 +48,7 @@ export default defineHandler(async (event) => {
         body: JSON.stringify({
           chat_id: chatId,
           text: message,
-          parse_mode: 'Markdown',
+          parse_mode: 'HTML',
           reply_markup: {
             inline_keyboard: [
               [
@@ -61,6 +61,10 @@ export default defineHandler(async (event) => {
       });
 
       const responseData: any = await response.json();
+      
+      if (!response.ok) {
+        console.error("Error de Telegram al enviar mensaje:", responseData);
+      }
 
       // Guardar el ID del mensaje de Telegram
       if (responseData && responseData.result) {
