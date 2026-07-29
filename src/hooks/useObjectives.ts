@@ -52,6 +52,42 @@ export function useCreateObjective() {
   });
 }
 
+export function useUpdateObjective() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ id, data }: { id: string; data: any }) => {
+      const res = await fetch(`/api/objectives/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) throw new Error('Error al actualizar objetivo');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['objectives'] });
+      toast.success('Objetivo actualizado exitosamente');
+    },
+    onError: () => toast.error('Error al actualizar objetivo')
+  });
+}
+
+export function useDeleteObjective() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const res = await fetch(`/api/objectives/${id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Error al eliminar objetivo');
+      return res.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['objectives'] });
+      toast.success('Objetivo eliminado');
+    },
+    onError: () => toast.error('Error al eliminar objetivo')
+  });
+}
+
 export function useToggleObjectiveTask() {
   const queryClient = useQueryClient();
   return useMutation({

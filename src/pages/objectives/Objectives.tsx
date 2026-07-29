@@ -1,10 +1,30 @@
-import { useObjectives } from '@/hooks/useObjectives';
+import { useState } from 'react';
+import { useObjectives, useDeleteObjective, Objective } from '@/hooks/useObjectives';
 import { CreateObjectiveModal } from './components/CreateObjectiveModal';
 import { ObjectiveCard } from './components/ObjectiveCard';
-import { CheckCircle2 } from 'lucide-react';
+import { CheckCircle2, Plus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
 export default function Objectives() {
   const { data: objectives = [], isLoading } = useObjectives();
+  const deleteMutation = useDeleteObjective();
+
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingObjective, setEditingObjective] = useState<Objective | null>(null);
+
+  const handleCreateNew = () => {
+    setEditingObjective(null);
+    setIsModalOpen(true);
+  };
+
+  const handleEdit = (objective: Objective) => {
+    setEditingObjective(objective);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = (id: string) => {
+    deleteMutation.mutate(id);
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -18,8 +38,16 @@ export default function Objectives() {
             Planifica y haz seguimiento de campañas, lanzamientos o metas multitaréa.
           </p>
         </div>
-        <CreateObjectiveModal />
+        <Button onClick={handleCreateNew} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-1">
+          <Plus className="w-4 h-4 mr-2" /> Nuevo Objetivo
+        </Button>
       </div>
+
+      <CreateObjectiveModal 
+        objective={editingObjective} 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+      />
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
@@ -38,7 +66,12 @@ export default function Objectives() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 animate-in fade-in duration-700 delay-100 fill-both">
           {objectives.map(objective => (
-            <ObjectiveCard key={objective.id} objective={objective} />
+            <ObjectiveCard 
+              key={objective.id} 
+              objective={objective} 
+              onEdit={handleEdit} 
+              onDelete={handleDelete} 
+            />
           ))}
         </div>
       )}

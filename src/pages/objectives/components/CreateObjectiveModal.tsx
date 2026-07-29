@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import React, { useState, useEffect } from 'react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,22 +7,44 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Plus, Trash2, Target } from 'lucide-react';
 import { useClients } from '@/hooks/useClients';
 import { usePartners } from '@/hooks/usePartners';
-import { useCreateObjective } from '@/hooks/useObjectives';
+import { useCreateObjective, useUpdateObjective, Objective } from '@/hooks/useObjectives';
 import { toast } from 'sonner';
 
-export function CreateObjectiveModal() {
-  const [open, setOpen] = useState(false);
+interface CreateObjectiveModalProps {
+  objective?: Objective | null;
+  isOpen: boolean;
+  onClose: () => void;
+}
+
+export function CreateObjectiveModal({ objective, isOpen, onClose }: CreateObjectiveModalProps) {
   const { data: clients = [] } = useClients();
   const { data: partners = [] } = usePartners();
+  
   const createMutation = useCreateObjective();
+  const updateMutation = useUpdateObjective();
+  const isPending = createMutation.isPending || updateMutation.isPending;
 
   const [title, setTitle] = useState('');
   const [clientId, setClientId] = useState('');
   const [deadline, setDeadline] = useState('');
 
-  const [tasks, setTasks] = useState<{ title: string; partnerId: string | null }[]>([]);
+  const [tasks, setTasks] = useState<{ id?: string, title: string; partnerId: string | null }[]>([]);
   const [currentTaskTitle, setCurrentTaskTitle] = useState('');
   const [currentPartnerId, setCurrentPartnerId] = useState('none');
+
+  useEffect(() => {
+    if (objective) {
+      setTitle(objective.title);
+      setClientId(objective.clientId);
+      setDeadline(objective.deadline);
+      setTasks(objective.tasks.map(t => ({ id: t.id, title: t.title, partnerId: t.partnerId })));
+    } else {
+      setTitle('');
+      setClientId('');
+      setDeadline('');
+      setTasks([]);
+    }
+  }, [objective, isOpen]);
 
   const handleAddTask = () => {
     if (!currentTaskTitle.trim()) {
@@ -57,34 +79,26 @@ export function CreateObjectiveModal() {
       return;
     }
 
-    createMutation.mutate({
-      title,
-      clientId,
-      deadline,
-      tasks
-    }, {
-      onSuccess: () => {
-        setOpen(false);
-        setTitle('');
-        setClientId('');
-        setDeadline('');
-        setTasks([]);
-      }
-    });
+    const payload = { title, clientId, deadline, tasks };
+
+    if (objective) {
+      updateMutation.mutate({ id: objective.id, data: payload }, {
+        onSuccess: () => onClose()
+      });
+    } else {
+      createMutation.mutate(payload, {
+        onSuccess: () => onClose()
+      });
+    }
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-1">
-          <Plus className="w-4 h-4 mr-2" /> Nuevo Objetivo
-        </Button>
-      </DialogTrigger>
+    <Dialog open={isOpen} onOpenChange={(val) => !val && onClose()}>
       <DialogContent className="sm:max-w-[550px] rounded-[2rem] max-h-[90vh] overflow-y-auto no-scrollbar">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
             <Target className="w-5 h-5 text-blue-600" />
-            Crear Objetivo de Campaña
+            {objective ? 'Editar Objetivo de Campaña' : 'Crear Objetivo de Campaña'}
           </DialogTitle>
         </DialogHeader>
         
@@ -130,7 +144,6 @@ export function CreateObjectiveModal() {
           <div className="border-t border-zinc-100 pt-4 space-y-4">
             <Label className="text-zinc-800 font-bold text-base">Lista de Tareas / Requisitos</Label>
             
-            {/* Formulario temporal para añadir tareas */}
             <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
               <div className="space-y-2 flex-1 w-full">
                 <Label className="text-xs text-zinc-500 uppercase tracking-wider">Nueva Tarea</Label>
@@ -163,7 +176,6 @@ export function CreateObjectiveModal() {
               </Button>
             </div>
 
-            {/* Lista de tareas agregadas */}
             {tasks.length > 0 && (
               <div className="space-y-2 mt-4 max-h-[200px] overflow-y-auto pr-2 no-scrollbar">
                 {tasks.map((task, idx) => {
@@ -196,8 +208,8 @@ export function CreateObjectiveModal() {
             )}
           </div>
 
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-12 rounded-xl text-md shadow-lg shadow-blue-600/20 mt-4" disabled={createMutation.isPending}>
-            {createMutation.isPending ? 'Guardando...' : 'Guardar Objetivo Completo'}
+          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-12 rounded-xl text-md shadow-lg shadow-blue-600/20 mt-4" disabled={isPending}>
+            {isPending ? 'Guardando...' : (objective ? 'Actualizar Objetivo' : 'Guardar Objetivo Completo')}
           </Button>
         </form>
       </DialogContent>

@@ -2,16 +2,30 @@ import { Objective, useToggleObjectiveTask } from '@/hooks/useObjectives';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
-import { CalendarClock, CheckCircle2 } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { CalendarClock, CheckCircle2, Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from '@/components/ui/alert-dialog';
 
 interface ObjectiveCardProps {
   objective: Objective;
+  onEdit: (objective: Objective) => void;
+  onDelete: (id: string) => void;
 }
 
-export function ObjectiveCard({ objective }: ObjectiveCardProps) {
+export function ObjectiveCard({ objective, onEdit, onDelete }: ObjectiveCardProps) {
   const toggleTask = useToggleObjectiveTask();
 
   const totalTasks = objective.tasks.length;
@@ -34,12 +48,43 @@ export function ObjectiveCard({ objective }: ObjectiveCardProps) {
       isCompleted ? "border-emerald-200/60 bg-emerald-50/10 shadow-sm" : "border-zinc-200/60 hover:shadow-xl hover:-translate-y-1"
     )}>
       
+      {/* Botones de acción (Aparecen en Hover) */}
+      <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-white/80 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-zinc-100">
+        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:bg-blue-50" onClick={() => onEdit(objective)}>
+          <Edit className="w-4 h-4" />
+        </Button>
+        <AlertDialog>
+          <AlertDialogTrigger asChild>
+            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-50">
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent className="rounded-[2rem] z-[100]">
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Eliminar objetivo?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Esta acción no se puede deshacer. Se eliminarán permanentemente el objetivo y todas sus tareas asignadas.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => onDelete(objective.id)} 
+                className="bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-600/20"
+              >
+                Eliminar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+
       {isCompleted && (
         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/20 blur-3xl rounded-full -z-10 pointer-events-none transition-all duration-1000"></div>
       )}
 
       <div className="flex justify-between items-start mb-3 relative z-10">
-        <div>
+        <div className="pr-20">
           <Badge variant="outline" className={cn(
             "font-semibold border-transparent mb-2",
             isCompleted ? "bg-emerald-100 text-emerald-800" : "bg-blue-50 text-blue-700"
