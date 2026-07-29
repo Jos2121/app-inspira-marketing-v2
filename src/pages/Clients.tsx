@@ -6,6 +6,7 @@ import { useClients, useCreateClient, useDeleteClient, useUpdateClient, Client }
 import { ClientList } from './clients/components/ClientList';
 import { ClientFormModal } from './clients/components/ClientFormModal';
 import { EditClientModal } from './clients/components/EditClientModal';
+import { PlanManagementModal } from './clients/components/PlanManagementModal';
 
 export default function Clients() {
   const { data: profile } = useUserProfile();
@@ -32,10 +33,13 @@ export default function Clients() {
           <p className="text-zinc-500 mt-1 font-medium">Gestiona y visualiza la información de contacto.</p>
         </div>
         
-        <ClientFormModal 
-          onSubmit={(data) => createMutation.mutate(data)} 
-          isPending={createMutation.isPending} 
-        />
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          {isAdmin && <PlanManagementModal />}
+          <ClientFormModal 
+            onSubmit={(data) => createMutation.mutate(data)} 
+            isPending={createMutation.isPending} 
+          />
+        </div>
       </div>
 
       <div className="relative max-w-md">
