@@ -4,6 +4,7 @@ import { useClients } from '@/hooks/useClients';
 import { usePartners } from '@/hooks/usePartners';
 import { CalendarView } from './components/CalendarView';
 import { RequirementsSection } from './components/RequirementsSection';
+import { CalendarObjectives } from './components/CalendarObjectives';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function CalendarPage() {
@@ -68,6 +69,9 @@ export default function CalendarPage() {
           </Select>
         </div>
       </div>
+
+      {/* Nueva Sección de Objetivos del Mes */}
+      <CalendarObjectives />
 
       <CalendarView 
         tasks={filteredTasks}
