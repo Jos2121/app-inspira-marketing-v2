@@ -5,7 +5,11 @@ export type Client = {
   id: string;
   name: string;
   phone: string | null;
+  startDate?: string | null;
+  planId?: string | null;
+  customButtons?: { label: string; url: string }[];
   createdAt: string;
+  plan?: { id: string; name: string; benefits: string[] };
 };
 
 export function useClients() {
@@ -23,7 +27,7 @@ export function useCreateClient() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async (newClient: Omit<Client, 'id' | 'createdAt'>) => {
+    mutationFn: async (newClient: Omit<Client, 'id' | 'createdAt' | 'plan'>) => {
       const res = await fetch('/api/clients', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,7 +48,7 @@ export function useUpdateClient() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: Partial<Omit<Client, 'id' | 'createdAt'>> }) => {
+    mutationFn: async ({ id, data }: { id: string; data: Partial<Omit<Client, 'id' | 'createdAt' | 'plan'>> }) => {
       const res = await fetch(`/api/clients/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
