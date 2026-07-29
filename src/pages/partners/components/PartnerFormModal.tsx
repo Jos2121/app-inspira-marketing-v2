@@ -20,11 +20,13 @@ interface PartnerFormModalProps {
 const APP_MODULES = [
   { id: '/', label: 'Dashboard General' },
   { id: '/calendar', label: 'Calendario y Tareas' },
-  { id: '/goals', label: 'Metas y Rendimiento' },
-  { id: '/finance', label: 'Finanzas y Transacciones' },
-  { id: '/workflows', label: 'Flujos de Trabajo' },
   { id: '/clients', label: 'Directorio de Clientes' },
-  { id: '/diagnostic', label: 'Auditorías y Diagnósticos' },
+  { id: '/objectives', label: 'Objetivos' },
+  { id: '/goals', label: 'Metas' },
+  { id: '/finance', label: 'Finanzas' },
+  { id: '/workflows', label: 'Flujos de Trabajo' },
+  { id: '/diagnostic', label: 'Diagnóstico' },
+  { id: '/partners', label: 'Staff / Administradores' },
 ];
 
 const PRESET_COLORS = [

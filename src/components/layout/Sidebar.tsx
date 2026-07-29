@@ -14,7 +14,7 @@ export const navItems = [
   { icon: Network, label: 'Flujos de Trabajo', path: '/workflows' },
   { icon: Users, label: 'Clientes', path: '/clients' },
   { icon: Activity, label: 'Diagnóstico', path: '/diagnostic' },
-  { icon: UserSquare2, label: 'Staff / Administradores', path: '/partners', adminOnly: true },
+  { icon: UserSquare2, label: 'Staff / Administradores', path: '/partners' },
 ];
 
 interface SidebarProps {
@@ -43,13 +43,10 @@ export function Sidebar({
   const isSuperadmin = role === 'SUPERADMIN' || accessibleTabs.includes('*');
 
   const items = navItems.filter(item => {
-    // La pestaña de Staff solo la puede ver el Superadmin
-    if (item.adminOnly && !isSuperadmin) return false;
-    
     // Si es superadmin ve todo
     if (isSuperadmin) return true;
     
-    // Si es Admin normal, ve solo lo que está en su array
+    // Si es Admin normal, ve solo lo que está explícitamente en su array de módulos
     return accessibleTabs.includes(item.path);
   });
 
