@@ -1,5 +1,5 @@
 import { Link, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Users, Target, Wallet, PanelLeftClose, PanelLeft, UserSquare2, CalendarDays, ShieldCheck, Activity, Network, CheckCircle2 } from 'lucide-react';
+import { LayoutDashboard, Users, Target, Wallet, PanelLeftClose, PanelLeft, UserSquare2, CalendarDays, Activity, Network, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
@@ -9,7 +9,6 @@ export const navItems = [
   { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
   { icon: CalendarDays, label: 'Calendario', path: '/calendar' },
   { icon: Target, label: 'Metas', path: '/goals' },
-  { icon: ShieldCheck, label: 'Cumplimiento', path: '/compliance' },
   { icon: CheckCircle2, label: 'Objetivos', path: '/objectives' },
   { icon: Wallet, label: 'Finanzas', path: '/finance' },
   { icon: Network, label: 'Flujos de Trabajo', path: '/workflows' },

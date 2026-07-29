@@ -116,22 +116,6 @@ export const tasks = pgTable('tasks', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-export const plans = pgTable('plans', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  name: text('name').notNull(),
-  activities: jsonb('activities').notNull().$type<string[]>(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
-
-export const complianceRecords = pgTable('compliance_records', {
-  id: uuid('id').primaryKey().defaultRandom(),
-  clientId: uuid('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
-  planId: uuid('plan_id').notNull().references(() => plans.id, { onDelete: 'restrict' }),
-  monthYear: text('month_year').notNull(),
-  checklist: jsonb('checklist').notNull().$type<Record<string, boolean>>(),
-  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
-});
-
 export const agencyPlans = pgTable('agency_plans', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
@@ -195,7 +179,6 @@ export const requirements = pgTable('requirements', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-// --- NUEVAS TABLAS DE OBJETIVOS ---
 export const objectives = pgTable('objectives', {
   id: uuid('id').primaryKey().defaultRandom(),
   title: text('title').notNull(),
@@ -232,11 +215,6 @@ export const tasksRelations = relations(tasks, ({ one, many }) => ({
 
 export const taskUpdatesRelations = relations(taskUpdates, ({ one }) => ({
   task: one(tasks, { fields: [taskUpdates.taskId], references: [tasks.id] }),
-}));
-
-export const complianceRecordsRelations = relations(complianceRecords, ({ one }) => ({
-  client: one(clients, { fields: [complianceRecords.clientId], references: [clients.id] }),
-  plan: one(plans, { fields: [complianceRecords.planId], references: [plans.id] }),
 }));
 
 export const diagnosticRecordsRelations = relations(diagnosticRecords, ({ one }) => ({

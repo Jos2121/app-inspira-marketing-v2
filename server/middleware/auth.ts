@@ -37,13 +37,11 @@ export default defineHandler(async (event) => {
       '/api/tasks': '/calendar',
       '/api/goals': '/goals',
       '/api/daily-logs': '/goals',
-      '/api/compliance': '/compliance',
-      '/api/plans': '/compliance',
       '/api/transactions': '/finance',
       '/api/clients': '/clients',
       '/api/diagnostic': '/diagnostic',
       '/api/workflows': '/workflows',
-      '/api/objectives': '/objectives', // Agregado permiso al middleware
+      '/api/objectives': '/objectives', 
     };
 
     for (const [apiPath, tabId] of Object.entries(routeMap)) {

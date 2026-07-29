@@ -21,7 +21,6 @@ const APP_MODULES = [
   { id: '/', label: 'Dashboard General' },
   { id: '/calendar', label: 'Calendario y Tareas' },
   { id: '/goals', label: 'Metas y Rendimiento' },
-  { id: '/compliance', label: 'Gestión de Cumplimiento' },
   { id: '/finance', label: 'Finanzas y Transacciones' },
   { id: '/workflows', label: 'Flujos de Trabajo' },
   { id: '/clients', label: 'Directorio de Clientes' },

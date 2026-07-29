@@ -12,7 +12,6 @@ import Goals from "./pages/goals/Goals";
 import Finance from "./pages/finance/Finance";
 import Partners from "./pages/partners/Partners";
 import CalendarPage from "./pages/calendar/Calendar";
-import Compliance from "./pages/compliance/Compliance";
 import Diagnostic from "./pages/diagnostic/Diagnostic";
 import Workflows from "./pages/workflows/Workflows";
 import Objectives from "./pages/objectives/Objectives";
@@ -34,7 +33,6 @@ const App = () => (
               <Route path="/" element={<Dashboard />} />
               <Route path="/calendar" element={<CalendarPage />} />
               <Route path="/goals" element={<Goals />} />
-              <Route path="/compliance" element={<Compliance />} />
               <Route path="/finance" element={<Finance />} />
               <Route path="/workflows" element={<Workflows />} />
               <Route path="/objectives" element={<Objectives />} />
