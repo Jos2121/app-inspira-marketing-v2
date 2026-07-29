@@ -85,7 +85,10 @@ export default function CalendarPage() {
         isPending={createMutation.isPending || updateMutation.isPending}
         isDeleting={deleteMutation.isPending}
       >
-        <RequirementsSection />
+        <RequirementsSection 
+          clientFilter={selectedClientId} 
+          partnerFilter={selectedPartnerId} 
+        />
       </CalendarView>
     </div>
   );

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useRequirements, useCreateRequirement, useUpdateRequirement, useDeleteRequirement, Requirement } from '@/hooks/useRequirements';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, MessageSquareWarning, CheckCircle2, Clock } from 'lucide-react';
+import { Plus, Edit, Trash2, MessageSquareWarning, CheckCircle2, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
 import { formatLocalDateString, formatDateLima } from '@/lib/date-utils';
 import { cn } from '@/lib/utils';
 import { RequirementFormModal } from './RequirementFormModal';
@@ -19,7 +19,12 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-export function RequirementsSection() {
+interface RequirementsSectionProps {
+  clientFilter: string;
+  partnerFilter: string;
+}
+
+export function RequirementsSection({ clientFilter, partnerFilter }: RequirementsSectionProps) {
   const { data: requirements = [], isLoading } = useRequirements();
   const createMutation = useCreateRequirement();
   const updateMutation = useUpdateRequirement();
@@ -27,6 +32,14 @@ export function RequirementsSection() {
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRequirement, setEditingRequirement] = useState<Requirement | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  // Resetear página al cambiar filtros
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [clientFilter, partnerFilter, requirements.length]);
 
   const handleCreate = (data: any) => {
     createMutation.mutate(data, { onSuccess: () => setIsModalOpen(false) });
@@ -45,6 +58,20 @@ export function RequirementsSection() {
     setEditingRequirement(req);
     setIsModalOpen(true);
   };
+
+  // Filtrado de la data
+  const filteredRequirements = requirements.filter(req => {
+    const matchesClient = clientFilter === 'all' || req.clientId === clientFilter;
+    const matchesPartner = partnerFilter === 'all' || req.requesterId === partnerFilter || req.assigneeId === partnerFilter;
+    return matchesClient && matchesPartner;
+  });
+
+  // Paginación
+  const totalPages = Math.ceil(filteredRequirements.length / ITEMS_PER_PAGE);
+  const paginatedRequirements = filteredRequirements.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
 
   return (
     <div className="glass rounded-[2rem] border-zinc-200/60 shadow-sm p-6 bg-white/50 space-y-6">
@@ -67,6 +94,7 @@ export function RequirementsSection() {
             <TableRow>
               <TableHead>Fecha</TableHead>
               <TableHead>Requerimiento</TableHead>
+              <TableHead>Cliente</TableHead>
               <TableHead>De</TableHead>
               <TableHead>Para</TableHead>
               <TableHead>Límite</TableHead>
@@ -77,17 +105,20 @@ export function RequirementsSection() {
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-zinc-500">Cargando requerimientos...</TableCell></TableRow>
-            ) : requirements.length === 0 ? (
-              <TableRow><TableCell colSpan={8} className="text-center py-8 text-zinc-500">No hay requerimientos activos.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center py-8 text-zinc-500">Cargando requerimientos...</TableCell></TableRow>
+            ) : filteredRequirements.length === 0 ? (
+              <TableRow><TableCell colSpan={9} className="text-center py-8 text-zinc-500">No hay requerimientos activos.</TableCell></TableRow>
             ) : (
-              requirements.map(req => (
+              paginatedRequirements.map(req => (
                 <TableRow key={req.id} className="hover:bg-zinc-50/50">
                   <TableCell className="font-medium text-zinc-600 whitespace-nowrap">
                     {formatDateLima(req.createdAt, 'dd MMM yyyy')}
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate font-medium text-zinc-900" title={req.content}>
                     {req.content}
+                  </TableCell>
+                  <TableCell className="text-zinc-600 font-medium whitespace-nowrap max-w-[150px] truncate" title={req.client?.name || 'Interno'}>
+                    {req.client?.name || 'Interno / No asignado'}
                   </TableCell>
                   <TableCell className="text-zinc-600">{req.requester?.name || '-'}</TableCell>
                   <TableCell className="text-zinc-600 font-semibold">{req.assignee?.name || '-'}</TableCell>
@@ -107,7 +138,7 @@ export function RequirementsSection() {
                       {req.status}
                     </Badge>
                   </TableCell>
-                  <TableCell className="max-w-[200px] text-xs text-rose-600 truncate" title={req.feedbackMessage || ''}>
+                  <TableCell className="max-w-[150px] text-xs text-rose-600 truncate" title={req.feedbackMessage || ''}>
                     {req.feedbackMessage || '-'}
                   </TableCell>
                   <TableCell className="text-right">
@@ -145,6 +176,40 @@ export function RequirementsSection() {
           </TableBody>
         </Table>
       </div>
+
+      {/* Paginación */}
+      {totalPages > 1 && (
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 bg-white/50 p-4 rounded-2xl border border-zinc-200/60 shadow-sm mt-4">
+          <span className="text-sm text-zinc-500 font-medium">
+            Mostrando {(currentPage - 1) * ITEMS_PER_PAGE + 1} al {Math.min(currentPage * ITEMS_PER_PAGE, filteredRequirements.length)} de {filteredRequirements.length} requerimientos
+          </span>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="bg-white rounded-xl"
+            >
+              <ChevronLeft className="w-4 h-4 mr-1" />
+              Anterior
+            </Button>
+            <div className="text-sm font-medium text-zinc-700 px-2 min-w-[100px] text-center">
+              Página {currentPage} de {totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
+              className="bg-white rounded-xl"
+            >
+              Siguiente
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       <RequirementFormModal 
         requirement={editingRequirement}
