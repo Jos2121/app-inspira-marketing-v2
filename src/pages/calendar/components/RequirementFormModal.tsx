@@ -6,11 +6,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { usePartners } from '@/hooks/usePartners';
+import { useClients } from '@/hooks/useClients';
 import { Requirement } from '@/hooks/useRequirements';
-import { getCurrentDateLimaISO } from '@/lib/date-utils';
+import { format as formatTz } from 'date-fns-tz';
+import { LIMA_TIMEZONE } from '@/lib/date-utils';
+import { toast } from 'sonner';
 
 interface RequirementFormModalProps {
-  requirement?: Requirement | null;
+  requirement?: (Requirement & { clientId?: string | null }) | null;
   isOpen: boolean;
   onClose: () => void;
   onSubmit: (data: any) => void;
@@ -19,12 +22,20 @@ interface RequirementFormModalProps {
 
 export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, isPending }: RequirementFormModalProps) {
   const { data: partners = [] } = usePartners();
+  const { data: clients = [] } = useClients();
+
+  // Función para generar la fecha y hora por defecto en el formato requerido por datetime-local
+  const getDefaultDateTime = () => {
+    const now = new Date();
+    return formatTz(now, "yyyy-MM-dd'T'HH:mm", { timeZone: LIMA_TIMEZONE });
+  };
   
   const [formData, setFormData] = useState({
     content: '',
+    clientId: '',
     requesterId: '',
     assigneeId: '',
-    deadline: getCurrentDateLimaISO(),
+    deadline: getDefaultDateTime(),
     status: 'Pendiente'
   });
 
@@ -32,17 +43,22 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
     if (requirement) {
       setFormData({
         content: requirement.content,
+        clientId: requirement.clientId || 'none',
         requesterId: requirement.requesterId,
         assigneeId: requirement.assigneeId,
-        deadline: requirement.deadline,
+        // Asegurar que el formato encaje en el input datetime-local (yyyy-MM-ddThh:mm)
+        deadline: requirement.deadline.includes('T') 
+          ? requirement.deadline.substring(0, 16) 
+          : `${requirement.deadline}T12:00`,
         status: requirement.status
       });
     } else {
       setFormData({
         content: '',
+        clientId: '',
         requesterId: '',
         assigneeId: '',
-        deadline: getCurrentDateLimaISO(),
+        deadline: getDefaultDateTime(),
         status: 'Pendiente'
       });
     }
@@ -50,7 +66,17 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    
+    // Validación manual para el cliente (ya que Radix UI esconde el select nativo)
+    if (!formData.clientId) {
+      toast.error('Por favor, selecciona un cliente (o escoge Interno).');
+      return;
+    }
+
+    onSubmit({
+      ...formData,
+      clientId: formData.clientId === 'none' ? null : formData.clientId
+    });
   };
 
   return (
@@ -72,6 +98,17 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
               className="resize-none h-24 focus-visible:ring-blue-600/20"
               placeholder="Describe lo que se necesita..."
             />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Cliente *</Label>
+            <Select required value={formData.clientId} onValueChange={v => setFormData({...formData, clientId: v})}>
+              <SelectTrigger><SelectValue placeholder="Seleccionar cliente..." /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">Interno / Sin Cliente</SelectItem>
+                {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
@@ -97,9 +134,9 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
           </div>
 
           <div className="space-y-2">
-            <Label>Fecha Límite *</Label>
+            <Label>Fecha y Hora Límite *</Label>
             <Input 
-              type="date" 
+              type="datetime-local" 
               required 
               value={formData.deadline} 
               onChange={e => setFormData({...formData, deadline: e.target.value})} 
