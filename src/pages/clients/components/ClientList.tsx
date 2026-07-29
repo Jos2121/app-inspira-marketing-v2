@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
-import { Trash2, Edit, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Trash2, Edit, ChevronLeft, ChevronRight, Briefcase } from 'lucide-react';
 import { Client } from '@/hooks/useClients';
+import { ClientDetailModal } from './ClientDetailModal';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -25,6 +26,10 @@ interface ClientListProps {
 export function ClientList({ clients, isLoading, isAdmin, onDelete, onEdit }: ClientListProps) {
   const [clientToDelete, setClientToDelete] = useState<string | null>(null);
   
+  // Estado para modal de detalles
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+  const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
+  
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
@@ -37,6 +42,11 @@ export function ClientList({ clients, isLoading, isAdmin, onDelete, onEdit }: Cl
       onDelete(clientToDelete);
       setClientToDelete(null);
     }
+  };
+
+  const openDetail = (client: Client) => {
+    setSelectedClient(client);
+    setIsDetailModalOpen(true);
   };
 
   const totalPages = Math.ceil(clients.length / ITEMS_PER_PAGE);
@@ -64,7 +74,15 @@ export function ClientList({ clients, isLoading, isAdmin, onDelete, onEdit }: Cl
             ) : (
               paginatedClients.map((client) => (
                 <TableRow key={client.id} className="hover:bg-zinc-50/50 transition-colors">
-                  <TableCell className="font-medium text-zinc-900">{client.name}</TableCell>
+                  <TableCell>
+                    <span 
+                      className="font-semibold text-blue-600 hover:text-blue-800 hover:underline cursor-pointer flex items-center gap-2 w-fit"
+                      onClick={() => openDetail(client)}
+                    >
+                      <Briefcase className="w-4 h-4 text-zinc-400" />
+                      {client.name}
+                    </span>
+                  </TableCell>
                   <TableCell className="text-zinc-600 font-mono text-sm">{client.phone || '-'}</TableCell>
                   <TableCell className="text-right">
                     <div className="flex justify-end gap-1">
@@ -129,6 +147,13 @@ export function ClientList({ clients, isLoading, isAdmin, onDelete, onEdit }: Cl
           </div>
         </div>
       )}
+
+      {/* Modal de Detalle */}
+      <ClientDetailModal 
+        client={selectedClient}
+        isOpen={isDetailModalOpen}
+        onClose={() => setIsDetailModalOpen(false)}
+      />
 
       <AlertDialog open={!!clientToDelete} onOpenChange={(open) => !open && setClientToDelete(null)}>
         <AlertDialogContent className="rounded-2xl">
