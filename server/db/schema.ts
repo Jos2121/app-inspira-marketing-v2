@@ -172,7 +172,6 @@ export const workflowTasks = pgTable('workflow_tasks', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-// --- TABLA DE AVANCES DE TAREAS (TELEGRAM) ---
 export const taskUpdates = pgTable('task_updates', {
   id: uuid('id').primaryKey().defaultRandom(),
   taskId: uuid('task_id').notNull().references(() => tasks.id, { onDelete: 'cascade' }),
@@ -183,7 +182,6 @@ export const taskUpdates = pgTable('task_updates', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
-// --- TABLA DE REQUERIMIENTOS ---
 export const requirements = pgTable('requirements', {
   id: uuid('id').primaryKey().defaultRandom(),
   content: text('content').notNull(),
@@ -196,6 +194,25 @@ export const requirements = pgTable('requirements', {
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
+// --- NUEVAS TABLAS DE OBJETIVOS ---
+export const objectives = pgTable('objectives', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  title: text('title').notNull(),
+  clientId: uuid('client_id').notNull().references(() => clients.id, { onDelete: 'cascade' }),
+  deadline: text('deadline').notNull(),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+export const objectiveTasks = pgTable('objective_tasks', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  objectiveId: uuid('objective_id').notNull().references(() => objectives.id, { onDelete: 'cascade' }),
+  title: text('title').notNull(),
+  partnerId: uuid('partner_id').references(() => partners.id, { onDelete: 'set null' }),
+  isCompleted: boolean('is_completed').notNull().default(false),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
+// --- RELACIONES ---
 
 export const goalsRelations = relations(goals, ({ one, many }) => ({
   client: one(clients, { fields: [goals.clientId], references: [clients.id] }),
@@ -237,4 +254,14 @@ export const workflowTasksRelations = relations(workflowTasks, ({ one }) => ({
 export const requirementsRelations = relations(requirements, ({ one }) => ({
   requester: one(partners, { fields: [requirements.requesterId], references: [partners.id], relationName: 'requirements_requester' }),
   assignee: one(partners, { fields: [requirements.assigneeId], references: [partners.id], relationName: 'requirements_assignee' }),
+}));
+
+export const objectivesRelations = relations(objectives, ({ one, many }) => ({
+  client: one(clients, { fields: [objectives.clientId], references: [clients.id] }),
+  tasks: many(objectiveTasks),
+}));
+
+export const objectiveTasksRelations = relations(objectiveTasks, ({ one }) => ({
+  objective: one(objectives, { fields: [objectiveTasks.objectiveId], references: [objectives.id] }),
+  partner: one(partners, { fields: [objectiveTasks.partnerId], references: [partners.id] }),
 }));
