@@ -4,20 +4,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/u
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Clock, Target, CheckCircle2, Circle, User } from 'lucide-react';
-import { getCurrentDateLimaISO, formatDateLima } from '@/lib/date-utils';
+import { formatDateLima } from '@/lib/date-utils';
 import { cn } from '@/lib/utils';
 
 export function CalendarObjectives() {
   const { data: objectives = [], isLoading } = useObjectives();
   const [selectedObjective, setSelectedObjective] = useState<Objective | null>(null);
 
-  // Obtener "YYYY-MM" del mes actual
-  const currentMonth = getCurrentDateLimaISO().substring(0, 7);
-
-  // Filtrar objetivos: que sean de este mes y no estén completados al 100%
+  // Filtrar objetivos: que no estén completados al 100% y ordenar por vencimiento (urgentes primero)
   const activeObjectives = objectives.filter(obj => {
-    if (!obj.deadline.startsWith(currentMonth)) return false;
-    
     const total = obj.tasks.length;
     const completed = obj.tasks.filter(t => t.isCompleted).length;
     const progress = total === 0 ? 0 : Math.round((completed / total) * 100);
@@ -31,7 +26,7 @@ export function CalendarObjectives() {
     <div className="space-y-3 animate-in fade-in slide-in-from-bottom-4 duration-700 delay-150 fill-both">
       <h3 className="text-lg font-bold text-zinc-900 flex items-center gap-2">
         <Target className="w-5 h-5 text-blue-600" /> 
-        Objetivos del Mes (Pendientes)
+        Objetivos Pendientes
       </h3>
       
       {/* Contenedor Horizontal Scrollable */}
