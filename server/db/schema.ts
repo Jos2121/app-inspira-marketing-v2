@@ -51,11 +51,21 @@ export const verification = pgTable("verification", {
 
 export const roleEnum = pgEnum('role_enum', ['SUPERADMIN', 'ADMIN']);
 
+export const clientPlans = pgTable('client_plans', {
+  id: uuid('id').primaryKey().defaultRandom(),
+  name: text('name').notNull(),
+  benefits: jsonb('benefits').notNull().$type<string[]>().default([]),
+  createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
+});
+
 export const clients = pgTable('clients', {
   id: uuid('id').primaryKey().defaultRandom(),
   name: text('name').notNull(),
   phone: text('phone'),
   address: text('address'),
+  startDate: text('start_date'),
+  planId: uuid('plan_id').references(() => clientPlans.id, { onDelete: 'set null' }),
+  customButtons: jsonb('custom_buttons').$type<{ label: string; url: string }[]>().default([]),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
 
@@ -197,6 +207,14 @@ export const objectiveTasks = pgTable('objective_tasks', {
 });
 
 // --- RELACIONES ---
+
+export const clientPlansRelations = relations(clientPlans, ({ many }) => ({
+  clients: many(clients),
+}));
+
+export const clientsRelations = relations(clients, ({ one }) => ({
+  plan: one(clientPlans, { fields: [clients.planId], references: [clientPlans.id] }),
+}));
 
 export const goalsRelations = relations(goals, ({ one, many }) => ({
   client: one(clients, { fields: [goals.clientId], references: [clients.id] }),

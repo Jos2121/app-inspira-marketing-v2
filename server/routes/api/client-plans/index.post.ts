@@ -1,7 +1,7 @@
 import { defineHandler } from 'nitro';
 import { readBody, createError } from 'nitro/h3';
 import { db } from '../../../utils/db';
-import { clients } from '../../../db/schema';
+import { clientPlans } from '../../../db/schema';
 
 export default defineHandler(async (event) => {
   const body = await readBody(event);
@@ -10,13 +10,10 @@ export default defineHandler(async (event) => {
     throw createError({ statusCode: 400, message: 'Name is required' });
   }
 
-  const [newClient] = await db.insert(clients).values({
+  const [newPlan] = await db.insert(clientPlans).values({
     name: body.name,
-    phone: body.phone,
-    startDate: body.startDate,
-    planId: body.planId || null,
-    customButtons: body.customButtons || [],
+    benefits: body.benefits || [],
   }).returning();
 
-  return newClient;
+  return newPlan;
 });
