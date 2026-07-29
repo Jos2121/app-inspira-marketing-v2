@@ -1,16 +1,24 @@
 import { useState } from 'react';
 import { useObjectives, useDeleteObjective, Objective } from '@/hooks/useObjectives';
+import { useClients } from '@/hooks/useClients';
 import { CreateObjectiveModal } from './components/CreateObjectiveModal';
 import { ObjectiveCard } from './components/ObjectiveCard';
-import { CheckCircle2, Plus } from 'lucide-react';
+import { CheckCircle2, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 export default function Objectives() {
   const { data: objectives = [], isLoading } = useObjectives();
+  const { data: clients = [] } = useClients();
   const deleteMutation = useDeleteObjective();
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingObjective, setEditingObjective] = useState<Objective | null>(null);
+
+  // Estados para filtros
+  const [clientFilter, setClientFilter] = useState('all');
+  const [monthFilter, setMonthFilter] = useState('');
 
   const handleCreateNew = () => {
     setEditingObjective(null);
@@ -25,6 +33,19 @@ export default function Objectives() {
   const handleDelete = (id: string) => {
     deleteMutation.mutate(id);
   };
+
+  const clearFilters = () => {
+    setClientFilter('all');
+    setMonthFilter('');
+  };
+
+  // Lógica de filtrado
+  const filteredObjectives = objectives.filter(obj => {
+    const matchesClient = clientFilter === 'all' || obj.clientId === clientFilter;
+    // Asumimos que monthFilter tiene el formato "YYYY-MM" y deadline "YYYY-MM-DDThh:mm"
+    const matchesMonth = monthFilter === '' || obj.deadline.startsWith(monthFilter);
+    return matchesClient && matchesMonth;
+  });
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
@@ -49,23 +70,72 @@ export default function Objectives() {
         onClose={() => setIsModalOpen(false)} 
       />
 
+      {/* Barra de Filtros */}
+      <div className="flex flex-col sm:flex-row gap-4 bg-white/50 p-4 rounded-2xl border border-zinc-200/60 shadow-sm justify-between items-center animate-in fade-in duration-500">
+        <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto flex-1">
+          <Select value={clientFilter} onValueChange={setClientFilter}>
+            <SelectTrigger className="w-full sm:w-[250px] bg-white border-zinc-200">
+              <SelectValue placeholder="Todos los clientes" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos los clientes</SelectItem>
+              {clients.map(c => (
+                <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <div className="flex gap-2 w-full sm:w-auto">
+            <Input 
+              type="month" 
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className="bg-white border-zinc-200 w-full sm:w-[180px]"
+            />
+            {(clientFilter !== 'all' || monthFilter !== '') && (
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                onClick={clearFilters} 
+                className="text-zinc-400 hover:text-red-500 hover:bg-red-50 shrink-0"
+                title="Limpiar filtros"
+              >
+                <X className="w-4 h-4" />
+              </Button>
+            )}
+          </div>
+        </div>
+        <div className="text-sm text-zinc-500 font-medium whitespace-nowrap self-end sm:self-auto">
+          {filteredObjectives.length} {filteredObjectives.length === 1 ? 'objetivo' : 'objetivos'}
+        </div>
+      </div>
+
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2">
           {[1, 2, 3].map(i => (
             <div key={i} className="h-80 bg-zinc-100/50 rounded-[2rem] animate-pulse"></div>
           ))}
         </div>
-      ) : objectives.length === 0 ? (
-        <div className="text-center py-24 glass rounded-[2.5rem] border border-dashed border-zinc-200/80 mt-8">
+      ) : filteredObjectives.length === 0 ? (
+        <div className="text-center py-24 glass rounded-[2.5rem] border border-dashed border-zinc-200/80 mt-4">
           <CheckCircle2 className="w-16 h-16 text-zinc-300 mx-auto mb-4" />
-          <h3 className="text-xl font-bold text-zinc-900">No hay objetivos activos</h3>
+          <h3 className="text-xl font-bold text-zinc-900">
+            {objectives.length === 0 ? 'No hay objetivos activos' : 'No se encontraron resultados'}
+          </h3>
           <p className="text-zinc-500 mt-2 max-w-sm mx-auto">
-            Crea tu primer objetivo para desglosar requerimientos grandes en tareas asignables.
+            {objectives.length === 0 
+              ? 'Crea tu primer objetivo para desglosar requerimientos grandes en tareas asignables.' 
+              : 'Prueba cambiando los filtros de cliente o mes para ver otros resultados.'}
           </p>
+          {objectives.length > 0 && (
+            <Button variant="link" onClick={clearFilters} className="mt-2 text-blue-600">
+              Limpiar filtros
+            </Button>
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-4 animate-in fade-in duration-700 delay-100 fill-both">
-          {objectives.map(objective => (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pt-2 animate-in fade-in duration-700 delay-100 fill-both">
+          {filteredObjectives.map(objective => (
             <ObjectiveCard 
               key={objective.id} 
               objective={objective} 
