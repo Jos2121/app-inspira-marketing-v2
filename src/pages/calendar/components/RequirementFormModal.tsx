@@ -24,7 +24,7 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
   const { data: partners = [] } = usePartners();
   const { data: clients = [] } = useClients();
 
-  // Función para generar la fecha y hora por defecto en el formato requerido por datetime-local
+  // Función para generar la fecha y hora por defecto
   const getDefaultDateTime = () => {
     const now = new Date();
     return formatTz(now, "yyyy-MM-dd'T'HH:mm", { timeZone: LIMA_TIMEZONE });
@@ -67,14 +67,24 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    // Validación manual para el cliente (ya que Radix UI esconde el select nativo)
     if (!formData.clientId) {
       toast.error('Por favor, selecciona un cliente (o escoge Interno).');
       return;
     }
+    
+    if (!formData.deadline) {
+      toast.error('Por favor, ingresa una fecha límite válida.');
+      return;
+    }
+
+    // Asegurarse de que el input envía un formato seguro antes de subirlo a la DB
+    const finalDeadline = formData.deadline.includes('T') 
+      ? formData.deadline 
+      : `${formData.deadline}T12:00`;
 
     onSubmit({
       ...formData,
+      deadline: finalDeadline,
       clientId: formData.clientId === 'none' ? null : formData.clientId
     });
   };

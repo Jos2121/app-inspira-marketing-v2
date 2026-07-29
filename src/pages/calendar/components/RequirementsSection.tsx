@@ -4,7 +4,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Plus, Edit, Trash2, MessageSquareWarning, CheckCircle2, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
-import { formatLocalDateString, formatDateLima } from '@/lib/date-utils';
+import { formatDateLima } from '@/lib/date-utils';
 import { cn } from '@/lib/utils';
 import { RequirementFormModal } from './RequirementFormModal';
 import {
@@ -35,6 +35,18 @@ export function RequirementsSection({ clientFilter, partnerFilter }: Requirement
 
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
+
+  // Función segura para formatear fechas y evitar 'Invalid time value'
+  const safeFormatDate = (dateStr: string | undefined | null, formatStr: string) => {
+    if (!dateStr) return '-';
+    try {
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr; // Fallback si no es parseable
+      return formatDateLima(d, formatStr);
+    } catch (e) {
+      return dateStr || '-';
+    }
+  };
 
   // Resetear página al cambiar filtros
   useEffect(() => {
@@ -112,7 +124,7 @@ export function RequirementsSection({ clientFilter, partnerFilter }: Requirement
               paginatedRequirements.map(req => (
                 <TableRow key={req.id} className="hover:bg-zinc-50/50">
                   <TableCell className="font-medium text-zinc-600 whitespace-nowrap">
-                    {formatDateLima(req.createdAt, 'dd MMM yyyy')}
+                    {safeFormatDate(req.createdAt, 'dd MMM yyyy')}
                   </TableCell>
                   <TableCell className="max-w-[200px] truncate font-medium text-zinc-900" title={req.content}>
                     {req.content}
@@ -123,7 +135,7 @@ export function RequirementsSection({ clientFilter, partnerFilter }: Requirement
                   <TableCell className="text-zinc-600">{req.requester?.name || '-'}</TableCell>
                   <TableCell className="text-zinc-600 font-semibold">{req.assignee?.name || '-'}</TableCell>
                   <TableCell className="font-mono text-sm text-zinc-600 whitespace-nowrap">
-                    {formatLocalDateString(req.deadline, 'dd MMM yyyy')}
+                    {safeFormatDate(req.deadline, "dd MMM yyyy - HH:mm")}
                   </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={cn(
