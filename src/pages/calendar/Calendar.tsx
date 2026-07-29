@@ -37,6 +37,7 @@ export default function CalendarPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto animate-in fade-in duration-500">
+      {/* Encabezado y Filtros */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-3xl font-bold tracking-tight text-zinc-900">Calendario Operativo</h2>
@@ -70,9 +71,12 @@ export default function CalendarPage() {
         </div>
       </div>
 
-      {/* Nueva Sección de Objetivos del Mes */}
-      <CalendarObjectives />
+      {/* Sección de Objetivos del Mes (Con margen inferior asegurado) */}
+      <div className="mb-6">
+        <CalendarObjectives />
+      </div>
 
+      {/* Vista del Calendario / Cuadrícula */}
       <CalendarView 
         tasks={filteredTasks}
         onTaskCreate={(data) => createMutation.mutate(data)}
