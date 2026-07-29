@@ -1,12 +1,12 @@
 import { defineHandler } from 'nitro';
 import { readBody, createError } from 'nitro/h3';
 import { db } from '../../../utils/db';
-import { requirements, partners } from '../../../db/schema';
+import { requirements, partners, clients } from '../../../db/schema';
 import { eq } from 'drizzle-orm';
 
 export default defineHandler(async (event) => {
   const body = await readBody(event);
-  const { content, requesterId, assigneeId, deadline } = body;
+  const { content, requesterId, assigneeId, deadline, clientId } = body;
 
   if (!content || !requesterId || !assigneeId || !deadline) {
     throw createError({ statusCode: 400, message: 'Faltan campos requeridos' });
@@ -17,6 +17,7 @@ export default defineHandler(async (event) => {
     content,
     requesterId,
     assigneeId,
+    clientId: clientId || null,
     deadline,
     status: 'Pendiente'
   }).returning();
@@ -24,6 +25,14 @@ export default defineHandler(async (event) => {
   // 2. Obtener los nombres para el mensaje de Telegram
   const requester = await db.query.partners.findFirst({ where: eq(partners.id, requesterId) });
   const assignee = await db.query.partners.findFirst({ where: eq(partners.id, assigneeId) });
+  
+  let clientName = 'Interno / No asignado';
+  if (clientId) {
+    const clientRecord = await db.query.clients.findFirst({ where: eq(clients.id, clientId) });
+    if (clientRecord) {
+      clientName = clientRecord.name;
+    }
+  }
 
   // 3. Enviar mensaje a Telegram si las variables están configuradas
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
@@ -33,7 +42,7 @@ export default defineHandler(async (event) => {
     const reqName = requester?.name || 'Desconocido';
     const assignName = assignee?.name || 'Desconocido';
 
-    const message = `🔔 <b>Nuevo Requerimiento</b>\n\n👤 <b>De:</b> ${reqName}\n👥 <b>Para:</b> ${assignName}\n📅 <b>Fecha Límite:</b> ${deadline}\n\n💬 <b>Detalle:</b> ${content}`;
+    const message = `🔔 <b>Nuevo Requerimiento</b>\n\n🏢 <b>Cliente:</b> ${clientName}\n👤 <b>De:</b> ${reqName}\n👥 <b>Para:</b> ${assignName}\n📅 <b>Fecha Límite:</b> ${deadline}\n\n💬 <b>Detalle:</b> ${content}`;
 
     const telegramApiUrl = `https://api.telegram.org/bot${botToken}/sendMessage`;
     

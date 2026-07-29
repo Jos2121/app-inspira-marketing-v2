@@ -8,6 +8,7 @@ export default defineHandler(async () => {
     with: {
       requester: true,
       assignee: true,
+      client: true,
     },
     orderBy: [desc(requirements.createdAt)],
   });

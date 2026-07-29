@@ -187,6 +187,7 @@ export const requirements = pgTable('requirements', {
   content: text('content').notNull(),
   requesterId: uuid('requester_id').notNull().references(() => partners.id, { onDelete: 'cascade' }),
   assigneeId: uuid('assignee_id').notNull().references(() => partners.id, { onDelete: 'cascade' }),
+  clientId: uuid('client_id').references(() => clients.id, { onDelete: 'cascade' }),
   deadline: text('deadline').notNull(),
   status: text('status').notNull().default('Pendiente'),
   telegramMessageId: text('telegram_message_id'),
@@ -254,6 +255,7 @@ export const workflowTasksRelations = relations(workflowTasks, ({ one }) => ({
 export const requirementsRelations = relations(requirements, ({ one }) => ({
   requester: one(partners, { fields: [requirements.requesterId], references: [partners.id], relationName: 'requirements_requester' }),
   assignee: one(partners, { fields: [requirements.assigneeId], references: [partners.id], relationName: 'requirements_assignee' }),
+  client: one(clients, { fields: [requirements.clientId], references: [clients.id] }),
 }));
 
 export const objectivesRelations = relations(objectives, ({ one, many }) => ({
