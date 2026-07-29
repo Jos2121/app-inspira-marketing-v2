@@ -15,6 +15,7 @@ import CalendarPage from "./pages/calendar/Calendar";
 import Compliance from "./pages/compliance/Compliance";
 import Diagnostic from "./pages/diagnostic/Diagnostic";
 import Workflows from "./pages/workflows/Workflows";
+import Objectives from "./pages/objectives/Objectives";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
               <Route path="/compliance" element={<Compliance />} />
               <Route path="/finance" element={<Finance />} />
               <Route path="/workflows" element={<Workflows />} />
+              <Route path="/objectives" element={<Objectives />} />
               <Route path="/clients" element={<Clients />} />
               <Route path="/partners" element={<Partners />} />
               <Route path="/diagnostic" element={<Diagnostic />} />
