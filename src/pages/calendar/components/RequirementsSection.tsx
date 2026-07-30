@@ -3,7 +3,11 @@ import { useRequirements, useCreateRequirement, useUpdateRequirement, useDeleteR
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Plus, Edit, Trash2, MessageSquareWarning, CheckCircle2, Clock, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { useClients } from '@/hooks/useClients';
+import { usePartners } from '@/hooks/usePartners';
+import { Plus, Edit, Trash2, MessageSquareWarning, CheckCircle2, Clock, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { formatDateLima } from '@/lib/date-utils';
 import { cn } from '@/lib/utils';
 import { RequirementFormModal } from './RequirementFormModal';
@@ -19,13 +23,11 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 
-interface RequirementsSectionProps {
-  clientFilter: string;
-  partnerFilter: string;
-}
-
-export function RequirementsSection({ clientFilter, partnerFilter }: RequirementsSectionProps) {
+export function RequirementsSection() {
   const { data: requirements = [], isLoading } = useRequirements();
+  const { data: clients = [] } = useClients();
+  const { data: partners = [] } = usePartners();
+  
   const createMutation = useCreateRequirement();
   const updateMutation = useUpdateRequirement();
   const deleteMutation = useDeleteRequirement();
@@ -33,15 +35,22 @@ export function RequirementsSection({ clientFilter, partnerFilter }: Requirement
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingRequirement, setEditingRequirement] = useState<Requirement | null>(null);
 
+  // Filtros Independientes
+  const [filterClient, setFilterClient] = useState('all');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [filterRequester, setFilterRequester] = useState('all');
+  const [filterAssignee, setFilterAssignee] = useState('all');
+  const [filterDate, setFilterDate] = useState('');
+
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  // Función segura para formatear fechas y evitar 'Invalid time value'
+  // Función segura para formatear fechas
   const safeFormatDate = (dateStr: string | undefined | null, formatStr: string) => {
     if (!dateStr) return '-';
     try {
       const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr; // Fallback si no es parseable
+      if (isNaN(d.getTime())) return dateStr; 
       return formatDateLima(d, formatStr);
     } catch (e) {
       return dateStr || '-';
@@ -51,7 +60,7 @@ export function RequirementsSection({ clientFilter, partnerFilter }: Requirement
   // Resetear página al cambiar filtros
   useEffect(() => {
     setCurrentPage(1);
-  }, [clientFilter, partnerFilter, requirements.length]);
+  }, [filterClient, filterStatus, filterRequester, filterAssignee, filterDate, requirements.length]);
 
   const handleCreate = (data: any) => {
     createMutation.mutate(data, { onSuccess: () => setIsModalOpen(false) });
@@ -73,9 +82,13 @@ export function RequirementsSection({ clientFilter, partnerFilter }: Requirement
 
   // Filtrado de la data
   const filteredRequirements = requirements.filter(req => {
-    const matchesClient = clientFilter === 'all' || req.clientId === clientFilter;
-    const matchesPartner = partnerFilter === 'all' || req.requesterId === partnerFilter || req.assigneeId === partnerFilter;
-    return matchesClient && matchesPartner;
+    const matchesClient = filterClient === 'all' || req.clientId === filterClient;
+    const matchesStatus = filterStatus === 'all' || req.status === filterStatus;
+    const matchesRequester = filterRequester === 'all' || req.requesterId === filterRequester;
+    const matchesAssignee = filterAssignee === 'all' || req.assigneeId === filterAssignee;
+    const matchesDate = !filterDate || req.deadline.startsWith(filterDate);
+    
+    return matchesClient && matchesStatus && matchesRequester && matchesAssignee && matchesDate;
   });
 
   // Paginación
@@ -86,8 +99,8 @@ export function RequirementsSection({ clientFilter, partnerFilter }: Requirement
   );
 
   return (
-    <div className="glass rounded-[2rem] border-zinc-200/60 shadow-sm p-6 bg-white/50 space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="glass rounded-[2rem] border-zinc-200/60 shadow-sm p-6 bg-white/50 space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-2">
         <div>
           <h3 className="text-xl font-bold text-zinc-900">Requerimientos Internos</h3>
           <p className="text-sm text-zinc-500 font-medium">Solicitudes y delegaciones entre el equipo de trabajo.</p>
@@ -98,6 +111,65 @@ export function RequirementsSection({ clientFilter, partnerFilter }: Requirement
         >
           <Plus className="w-4 h-4 mr-2" /> Nuevo Requerimiento
         </Button>
+      </div>
+
+      {/* Filtros Independientes para Requerimientos */}
+      <div className="flex flex-wrap gap-3 bg-zinc-50/50 p-3 rounded-xl border border-zinc-100">
+        <Select value={filterClient} onValueChange={setFilterClient}>
+          <SelectTrigger className="w-[160px] h-9 bg-white">
+            <SelectValue placeholder="Cliente..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los clientes</SelectItem>
+            {clients.map(c => <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterStatus} onValueChange={setFilterStatus}>
+          <SelectTrigger className="w-[140px] h-9 bg-white">
+            <SelectValue placeholder="Estado..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos los estados</SelectItem>
+            <SelectItem value="Pendiente">Pendiente</SelectItem>
+            <SelectItem value="Realizado">Realizado</SelectItem>
+            <SelectItem value="Con Observaciones">Con Observaciones</SelectItem>
+          </SelectContent>
+        </Select>
+
+        <Select value={filterRequester} onValueChange={setFilterRequester}>
+          <SelectTrigger className="w-[150px] h-9 bg-white">
+            <SelectValue placeholder="De (Requiere)..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">De: Cualquiera</SelectItem>
+            {partners.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+          <SelectTrigger className="w-[150px] h-9 bg-white">
+            <SelectValue placeholder="Para (Asignado)..." />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Para: Cualquiera</SelectItem>
+            {partners.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+          </SelectContent>
+        </Select>
+
+        <div className="flex items-center gap-2">
+          <Input 
+            type="date" 
+            value={filterDate} 
+            onChange={e => setFilterDate(e.target.value)} 
+            className="h-9 w-[150px] bg-white focus-visible:ring-blue-600/20"
+          />
+          {filterDate && (
+            <Button variant="ghost" size="icon" className="h-9 w-9 text-zinc-400 hover:text-red-500" onClick={() => setFilterDate('')}>
+              <X className="w-4 h-4" />
+            </Button>
+          )}
+        </div>
       </div>
 
       <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
@@ -119,7 +191,7 @@ export function RequirementsSection({ clientFilter, partnerFilter }: Requirement
             {isLoading ? (
               <TableRow><TableCell colSpan={9} className="text-center py-8 text-zinc-500">Cargando requerimientos...</TableCell></TableRow>
             ) : filteredRequirements.length === 0 ? (
-              <TableRow><TableCell colSpan={9} className="text-center py-8 text-zinc-500">No hay requerimientos activos.</TableCell></TableRow>
+              <TableRow><TableCell colSpan={9} className="text-center py-8 text-zinc-500">No hay requerimientos activos con los filtros actuales.</TableCell></TableRow>
             ) : (
               paginatedRequirements.map(req => (
                 <TableRow key={req.id} className="hover:bg-zinc-50/50">
@@ -165,7 +237,7 @@ export function RequirementsSection({ clientFilter, partnerFilter }: Requirement
                             <Trash2 className="w-4 h-4" />
                           </Button>
                         </AlertDialogTrigger>
-                        <AlertDialogContent className="rounded-[2rem]">
+                        <AlertDialogContent className="rounded-[2rem] z-[100]">
                           <AlertDialogHeader>
                             <AlertDialogTitle>¿Eliminar requerimiento?</AlertDialogTitle>
                             <AlertDialogDescription>
