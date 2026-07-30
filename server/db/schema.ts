@@ -80,6 +80,7 @@ export const partners = pgTable('partners', {
   role: text('role').notNull(),
   phone: text('phone'),
   email: text('email'),
+  telegramChatId: text('telegram_chat_id'),
   status: text('status').notNull().default('Activo'),
   systemRole: text('system_role').notNull().default('ADMIN'),
   accessibleTabs: jsonb('accessible_tabs').notNull().$type<string[]>().default([]),

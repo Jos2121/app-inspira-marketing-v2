@@ -7,6 +7,7 @@ export type Partner = {
   role: string;
   phone: string | null;
   email: string | null;
+  telegramChatId: string | null;
   status: string;
   systemRole: string;
   accessibleTabs: string[];

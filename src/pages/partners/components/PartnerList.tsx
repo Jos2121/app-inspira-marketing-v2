@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { Edit, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Edit, Trash2, ChevronLeft, ChevronRight, Send } from 'lucide-react';
 import { Partner } from '@/hooks/usePartners';
 import {
   AlertDialog,
@@ -46,15 +46,16 @@ export function PartnerList({ partners, isLoading, onEdit, onDelete }: PartnerLi
               <TableHead>Nombre y Rol</TableHead>
               <TableHead>Contacto</TableHead>
               <TableHead>Correo Electrónico</TableHead>
+              <TableHead>Telegram</TableHead>
               <TableHead>Estado</TableHead>
               <TableHead className="text-right">Acciones</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {isLoading ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-zinc-500">Cargando socios...</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-zinc-500">Cargando socios...</TableCell></TableRow>
             ) : partners.length === 0 ? (
-              <TableRow><TableCell colSpan={5} className="text-center py-8 text-zinc-500">No hay socios registrados</TableCell></TableRow>
+              <TableRow><TableCell colSpan={6} className="text-center py-8 text-zinc-500">No hay socios registrados</TableCell></TableRow>
             ) : (
               paginatedPartners.map(partner => (
                 <TableRow key={partner.id} className="hover:bg-zinc-50/50 transition-colors">
@@ -73,6 +74,16 @@ export function PartnerList({ partners, isLoading, onEdit, onDelete }: PartnerLi
                   </TableCell>
                   <TableCell className="font-mono text-sm text-zinc-600">{partner.phone || '-'}</TableCell>
                   <TableCell className="text-sm text-zinc-600">{partner.email || '-'}</TableCell>
+                  <TableCell>
+                    {partner.telegramChatId ? (
+                      <Badge variant="outline" className="bg-blue-50/50 text-blue-700 font-mono text-xs border-blue-200 gap-1 px-2">
+                        <Send className="w-3 h-3 text-blue-500" />
+                        {partner.telegramChatId}
+                      </Badge>
+                    ) : (
+                      <span className="text-zinc-400 font-medium">-</span>
+                    )}
+                  </TableCell>
                   <TableCell>
                     <Badge variant="outline" className={partner.status === 'Activo' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-zinc-100 text-zinc-500'}>
                       {partner.status}

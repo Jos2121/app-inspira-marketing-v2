@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Plus, ShieldCheck, Palette } from 'lucide-react';
+import { Plus, ShieldCheck, Palette, Send } from 'lucide-react';
 import { Partner } from '@/hooks/usePartners';
 import { cn } from '@/lib/utils';
 
@@ -44,6 +44,7 @@ export function PartnerFormModal({ partner, isOpen, onClose, onSubmit, isPending
     phone: '',
     email: '',
     password: '',
+    telegramChatId: '',
     status: 'Activo',
     systemRole: 'ADMIN',
     accessibleTabs: [] as string[],
@@ -58,13 +59,14 @@ export function PartnerFormModal({ partner, isOpen, onClose, onSubmit, isPending
         phone: partner.phone || '',
         email: partner.email || '',
         password: '',
+        telegramChatId: partner.telegramChatId || '',
         status: partner.status || 'Activo',
         systemRole: partner.systemRole || 'ADMIN',
         accessibleTabs: partner.accessibleTabs || [],
         color: partner.color || '#3b82f6'
       });
     } else {
-      setFormData({ name: '', role: '', phone: '', email: '', password: '', status: 'Activo', systemRole: 'ADMIN', accessibleTabs: [], color: '#3b82f6' });
+      setFormData({ name: '', role: '', phone: '', email: '', password: '', telegramChatId: '', status: 'Activo', systemRole: 'ADMIN', accessibleTabs: [], color: '#3b82f6' });
     }
   }, [partner, open]);
 
@@ -164,16 +166,33 @@ export function PartnerFormModal({ partner, isOpen, onClose, onSubmit, isPending
             )}
           </div>
 
-          {!partner && (
-            <div className="space-y-2">
-              <Label>Teléfono (Opcional)</Label>
-              <Input 
-                value={formData.phone} 
-                onChange={e => setFormData({...formData, phone: e.target.value})}
-                className="bg-zinc-50 focus-visible:ring-blue-600/20" 
-              />
+          <div className="grid grid-cols-2 gap-4">
+            {!partner && (
+              <div className="space-y-2 col-span-2 sm:col-span-1">
+                <Label>Teléfono (Opcional)</Label>
+                <Input 
+                  value={formData.phone} 
+                  onChange={e => setFormData({...formData, phone: e.target.value})}
+                  className="bg-zinc-50 focus-visible:ring-blue-600/20" 
+                />
+              </div>
+            )}
+            
+            <div className={cn("space-y-2", !partner ? "col-span-2 sm:col-span-1" : "col-span-2")}>
+              <Label className="flex items-center gap-2">
+                ID Chat Telegram <span className="text-zinc-400 font-normal text-xs">(Opcional)</span>
+              </Label>
+              <div className="relative">
+                <Send className="absolute left-3 top-3 h-4 w-4 text-blue-500" />
+                <Input 
+                  value={formData.telegramChatId} 
+                  onChange={e => setFormData({...formData, telegramChatId: e.target.value})}
+                  placeholder="-100xxxxxxxxx o 12345678"
+                  className="pl-9 bg-zinc-50 font-mono focus-visible:ring-blue-600/20" 
+                />
+              </div>
             </div>
-          )}
+          </div>
 
           <div className="space-y-3">
             <Label className="flex items-center gap-2">

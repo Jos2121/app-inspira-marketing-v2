@@ -14,6 +14,7 @@ export default defineHandler(async (event) => {
     role: body.role,
     phone: body.phone,
     email: body.email,
+    telegramChatId: body.telegramChatId || null,
     status: body.status,
     systemRole: body.systemRole,
     accessibleTabs: body.accessibleTabs,
