@@ -7,6 +7,7 @@ import { CalendarClock, CheckCircle2, Edit, Trash2 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
+import { formatDateLima } from '@/lib/date-utils';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -33,58 +34,51 @@ export function ObjectiveCard({ objective, onEdit, onDelete }: ObjectiveCardProp
   const progress = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
   const isCompleted = progress === 100 && totalTasks > 0;
 
+  // Formateo seguro para la fecha límite del objetivo principal
   const formatDeadline = (dateStr: string) => {
     try {
       const date = new Date(dateStr);
-      return format(date, "d 'de' MMM, yyyy - HH:mm", { locale: es });
+      if (isNaN(date.getTime())) return dateStr;
+      return formatDateLima(date, "d 'de' MMM, yyyy - HH:mm");
     } catch {
       return dateStr;
     }
   };
 
+  // Formateo seguro para la fecha límite de las tareas (evitando saltos de día)
+  const safeFormatTaskDeadline = (dateStr: string | null) => {
+    if (!dateStr) return null;
+    try {
+      const isoStr = dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00Z`;
+      const date = new Date(isoStr);
+      if (isNaN(date.getTime())) return dateStr;
+      return format(date, "dd MMM", { locale: es });
+    } catch {
+      return dateStr;
+    }
+  };
+
+  // Ordenar tareas por fecha límite (ascendente, sin fecha al final)
+  const sortedTasks = [...objective.tasks].sort((a, b) => {
+    if (!a.deadline && !b.deadline) return 0;
+    if (!a.deadline) return 1;
+    if (!b.deadline) return -1;
+    return new Date(a.deadline).getTime() - new Date(b.deadline).getTime();
+  });
+
   return (
     <div className={cn(
-      "glass rounded-[2rem] p-6 border transition-all duration-300 relative overflow-hidden group", 
+      "glass rounded-[2rem] p-6 border transition-all duration-300 relative overflow-hidden flex flex-col", 
       isCompleted ? "border-emerald-200/60 bg-emerald-50/10 shadow-sm" : "border-zinc-200/60 hover:shadow-xl hover:-translate-y-1"
     )}>
       
-      {/* Botones de acción (Aparecen en Hover) */}
-      <div className="absolute top-4 right-4 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity z-20 bg-white/80 backdrop-blur-sm p-1 rounded-xl shadow-sm border border-zinc-100">
-        <Button variant="ghost" size="icon" className="h-8 w-8 text-blue-500 hover:bg-blue-50" onClick={() => onEdit(objective)}>
-          <Edit className="w-4 h-4" />
-        </Button>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:bg-red-50">
-              <Trash2 className="w-4 h-4" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent className="rounded-[2rem] z-[100]">
-            <AlertDialogHeader>
-              <AlertDialogTitle>¿Eliminar objetivo?</AlertDialogTitle>
-              <AlertDialogDescription>
-                Esta acción no se puede deshacer. Se eliminarán permanentemente el objetivo y todas sus tareas asignadas.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
-              <AlertDialogAction 
-                onClick={() => onDelete(objective.id)} 
-                className="bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-600/20"
-              >
-                Eliminar
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-
       {isCompleted && (
         <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-400/20 blur-3xl rounded-full -z-10 pointer-events-none transition-all duration-1000"></div>
       )}
 
+      {/* Cabecera del Objetivo */}
       <div className="flex justify-between items-start mb-3 relative z-10">
-        <div className="pr-20">
+        <div className="pr-4">
           <Badge variant="outline" className={cn(
             "font-semibold border-transparent mb-2",
             isCompleted ? "bg-emerald-100 text-emerald-800" : "bg-blue-50 text-blue-700"
@@ -94,6 +88,37 @@ export function ObjectiveCard({ objective, onEdit, onDelete }: ObjectiveCardProp
           <h3 className="text-xl font-bold text-zinc-900 leading-tight tracking-tight">
             {objective.title}
           </h3>
+        </div>
+        
+        {/* Acciones (Editar/Eliminar) siempre accesibles pero sutiles */}
+        <div className="flex items-center gap-1 shrink-0 bg-white/60 p-1 rounded-xl shadow-sm border border-zinc-100">
+          <Button variant="ghost" size="icon" className="h-7 w-7 text-blue-500 hover:bg-blue-50" onClick={() => onEdit(objective)}>
+            <Edit className="w-3.5 h-3.5" />
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon" className="h-7 w-7 text-red-400 hover:text-red-500 hover:bg-red-50">
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent className="rounded-[2rem] z-[100]">
+              <AlertDialogHeader>
+                <AlertDialogTitle>¿Eliminar objetivo?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  Esta acción no se puede deshacer. Se eliminarán permanentemente el objetivo y todas sus tareas asignadas.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel className="rounded-xl">Cancelar</AlertDialogCancel>
+                <AlertDialogAction 
+                  onClick={() => onDelete(objective.id)} 
+                  className="bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg shadow-red-600/20"
+                >
+                  Eliminar
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
         </div>
       </div>
 
@@ -121,8 +146,9 @@ export function ObjectiveCard({ objective, onEdit, onDelete }: ObjectiveCardProp
         </div>
       </div>
 
-      <div className="space-y-2 relative z-10 bg-white/40 p-1.5 rounded-2xl border border-zinc-100/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)]">
-        {objective.tasks.map(task => (
+      {/* Lista de Tareas (Ordenada por Vencimiento) */}
+      <div className="space-y-2 relative z-10 bg-white/40 p-1.5 rounded-2xl border border-zinc-100/50 shadow-[inset_0_2px_4px_rgba(0,0,0,0.02)] flex-1 overflow-y-auto max-h-[300px] no-scrollbar">
+        {sortedTasks.map(task => (
           <div 
             key={task.id} 
             className={cn(
@@ -138,7 +164,7 @@ export function ObjectiveCard({ objective, onEdit, onDelete }: ObjectiveCardProp
                 task.isCompleted && "border-emerald-500 bg-emerald-500 text-white"
               )}
             />
-            <div className="flex-1 flex flex-col gap-1.5">
+            <div className="flex-1 flex flex-col gap-1.5 overflow-hidden">
               <span className={cn(
                 "text-sm font-medium leading-tight transition-all", 
                 task.isCompleted ? "line-through text-zinc-400" : "text-zinc-700"
@@ -146,17 +172,26 @@ export function ObjectiveCard({ objective, onEdit, onDelete }: ObjectiveCardProp
                 {task.title}
               </span>
               
-              {task.partner && (
-                <div className="flex items-center gap-1.5 w-fit bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-lg">
-                  <div 
-                    className="w-1.5 h-1.5 rounded-full shrink-0" 
-                    style={{ backgroundColor: task.partner.color || '#3b82f6' }} 
-                  />
-                  <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider">
-                    {task.partner.name}
-                  </span>
-                </div>
-              )}
+              <div className="flex flex-wrap items-center gap-2 mt-0.5">
+                {task.partner && (
+                  <div className="flex items-center gap-1.5 w-fit bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-lg">
+                    <div 
+                      className="w-1.5 h-1.5 rounded-full shrink-0" 
+                      style={{ backgroundColor: task.partner.color || '#3b82f6' }} 
+                    />
+                    <span className="text-[10px] font-bold text-zinc-600 uppercase tracking-wider truncate max-w-[100px]">
+                      {task.partner.name}
+                    </span>
+                  </div>
+                )}
+                
+                {task.deadline && (
+                  <div className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wider bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-lg">
+                    <CalendarClock className="w-3 h-3 text-amber-500 shrink-0" />
+                    Vence: {safeFormatTaskDeadline(task.deadline)}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         ))}
