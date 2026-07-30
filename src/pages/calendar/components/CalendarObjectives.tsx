@@ -3,9 +3,11 @@ import { useObjectives, Objective } from '@/hooks/useObjectives';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
-import { Clock, Target, CheckCircle2, Circle, User } from 'lucide-react';
+import { Clock, Target, CheckCircle2, Circle, User, CalendarClock } from 'lucide-react';
 import { formatDateLima } from '@/lib/date-utils';
 import { cn } from '@/lib/utils';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
 
 export function CalendarObjectives() {
   const { data: objectives = [], isLoading } = useObjectives();
@@ -19,6 +21,19 @@ export function CalendarObjectives() {
     
     return progress < 100;
   }).sort((a, b) => new Date(a.deadline).getTime() - new Date(b.deadline).getTime());
+
+  // Formateo seguro para la fecha límite de las tareas (evitando saltos de día y errores)
+  const safeFormatTaskDeadline = (dateStr: string | null | undefined) => {
+    if (!dateStr) return null;
+    try {
+      const isoStr = dateStr.includes('T') ? dateStr : `${dateStr}T12:00:00Z`;
+      const date = new Date(isoStr);
+      if (isNaN(date.getTime())) return dateStr;
+      return format(date, "dd MMM", { locale: es });
+    } catch {
+      return dateStr;
+    }
+  };
 
   if (isLoading || activeObjectives.length === 0) return null;
 
@@ -122,11 +137,19 @@ export function CalendarObjectives() {
                                 {task.title}
                               </span>
                               
-                              {task.partner && (
-                                <span className="text-[10px] w-fit flex items-center gap-1.5 text-zinc-600 font-bold uppercase tracking-wider bg-zinc-100 px-2 py-0.5 rounded-md">
-                                   <User className="w-3 h-3" /> {task.partner.name}
-                                </span>
-                              )}
+                              <div className="flex flex-wrap gap-2 items-center">
+                                {task.partner && (
+                                  <span className="text-[10px] w-fit flex items-center gap-1.5 text-zinc-600 font-bold uppercase tracking-wider bg-zinc-100 px-2 py-0.5 rounded-md">
+                                     <User className="w-3 h-3" /> {task.partner.name}
+                                  </span>
+                                )}
+                                {task.deadline && (
+                                  <span className="flex items-center gap-1 text-[10px] font-bold text-zinc-500 uppercase tracking-wider bg-zinc-50 border border-zinc-100 px-2 py-0.5 rounded-lg">
+                                    <CalendarClock className="w-3 h-3 text-amber-500 shrink-0" />
+                                    Vence: {safeFormatTaskDeadline(task.deadline)}
+                                  </span>
+                                )}
+                              </div>
                            </div>
                         </div>
                       ))
