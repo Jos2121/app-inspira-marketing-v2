@@ -45,6 +45,7 @@ export function TaskFormModal({ task, isOpen, onClose, onSubmit, onDelete, isPen
   const [updates, setUpdates] = useState<any[]>([]);
   const [newUpdate, setNewUpdate] = useState('');
   const [isSendingUpdate, setIsSendingUpdate] = useState(false);
+  const [selectedChatId, setSelectedChatId] = useState('default');
 
   const getDefaultTimes = (selected?: Date) => {
     if (selected) {
@@ -93,6 +94,8 @@ export function TaskFormModal({ task, isOpen, onClose, onSubmit, onDelete, isPen
         clientId: task.clientId || 'none',
         status: task.status
       });
+      // Reseteamos el selector de chat al abrir una tarea
+      setSelectedChatId('default');
     } else {
       const times = getDefaultTimes(selectedDate);
       setFormData({
@@ -127,7 +130,10 @@ export function TaskFormModal({ task, isOpen, onClose, onSubmit, onDelete, isPen
       const res = await fetch(`/api/tasks/${task.id}/updates`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: newUpdate })
+        body: JSON.stringify({ 
+          content: newUpdate,
+          targetChatId: selectedChatId === 'default' ? '' : selectedChatId 
+        })
       });
       if (res.ok) {
         const addedUpdate = await res.json();
@@ -178,6 +184,8 @@ export function TaskFormModal({ task, isOpen, onClose, onSubmit, onDelete, isPen
       return isoString;
     }
   };
+
+  const partnersWithChat = partners.filter(p => p.telegramChatId);
 
   return (
     <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
@@ -241,28 +249,51 @@ export function TaskFormModal({ task, isOpen, onClose, onSubmit, onDelete, isPen
 
               {/* REPORTE DE AVANCES */}
               <div className="mt-6 space-y-3">
-                <h4 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                <h4 className="text-sm font-bold text-zinc-900 flex items-center gap-2 mb-2">
                   <Send className="w-4 h-4 text-blue-500" />
                   Reporte de Avances
                 </h4>
                 
-                <div className="flex gap-2">
+                <div className="space-y-2 bg-blue-50/50 p-3 rounded-xl border border-blue-100/50">
+                  <Label className="text-xs text-zinc-500 font-semibold uppercase tracking-wider">Destino Telegram</Label>
+                  <Select value={selectedChatId} onValueChange={setSelectedChatId}>
+                    <SelectTrigger className="bg-white text-sm h-9">
+                      <SelectValue placeholder="Seleccionar destino..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="default">Grupo Principal (Por defecto)</SelectItem>
+                      {selectedPartner?.telegramChatId && (
+                        <SelectItem value={selectedPartner.telegramChatId}>
+                          Privado: {selectedPartner.name} (Asignado)
+                        </SelectItem>
+                      )}
+                      {partnersWithChat
+                        .filter(p => p.id !== selectedPartner?.id)
+                        .map(p => (
+                          <SelectItem key={p.id} value={p.telegramChatId!}>
+                            Privado: {p.name}
+                          </SelectItem>
+                        ))
+                      }
+                    </SelectContent>
+                  </Select>
+                  
                   <textarea 
-                    className="flex-1 min-h-[80px] p-3 text-sm rounded-xl border border-zinc-200 focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
-                    placeholder="Escribe el avance para enviarlo por Telegram..."
+                    className="w-full mt-2 min-h-[80px] p-3 text-sm rounded-xl border border-zinc-200 bg-white focus:border-blue-500 focus:ring-1 focus:ring-blue-500 outline-none resize-none"
+                    placeholder="Escribe el avance de esta tarea..."
                     value={newUpdate}
                     onChange={(e) => setNewUpdate(e.target.value)}
                     disabled={isSendingUpdate}
                   />
+                  <Button 
+                    type="button" 
+                    onClick={handleSendUpdate} 
+                    disabled={!newUpdate.trim() || isSendingUpdate}
+                    className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-9 text-sm"
+                  >
+                    {isSendingUpdate ? 'Enviando a Telegram...' : 'Enviar Avance'}
+                  </Button>
                 </div>
-                <Button 
-                  type="button" 
-                  onClick={handleSendUpdate} 
-                  disabled={!newUpdate.trim() || isSendingUpdate}
-                  className="w-full bg-slate-900 hover:bg-slate-800 text-white rounded-xl h-9 text-sm"
-                >
-                  {isSendingUpdate ? 'Enviando a Telegram...' : 'Enviar Avance'}
-                </Button>
 
                 {updates.length > 0 && (
                   <div className="mt-4 space-y-3 max-h-[200px] overflow-y-auto pr-1 no-scrollbar">

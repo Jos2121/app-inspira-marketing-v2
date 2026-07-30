@@ -7,7 +7,7 @@ import { eq } from 'drizzle-orm';
 export default defineHandler(async (event) => {
   const taskId = getRouterParam(event, 'id');
   const body = await readBody(event);
-  const { content } = body;
+  const { content, targetChatId } = body;
 
   if (!taskId || !content) {
     throw createError({ statusCode: 400, message: 'Faltan datos requeridos' });
@@ -31,7 +31,8 @@ export default defineHandler(async (event) => {
 
   // 3. Configurar y enviar a Telegram
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  // Usar el chat seleccionado o el chat global por defecto
+  const chatId = targetChatId || process.env.TELEGRAM_CHAT_ID;
 
   if (botToken && chatId) {
     const clientName = task?.client?.name || 'No especificado';
