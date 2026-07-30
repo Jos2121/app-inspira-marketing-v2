@@ -11,6 +11,7 @@ import { Requirement } from '@/hooks/useRequirements';
 import { format as formatTz } from 'date-fns-tz';
 import { LIMA_TIMEZONE } from '@/lib/date-utils';
 import { toast } from 'sonner';
+import { Send } from 'lucide-react';
 
 interface RequirementFormModalProps {
   requirement?: (Requirement & { clientId?: string | null }) | null;
@@ -39,6 +40,8 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
     status: 'Pendiente'
   });
 
+  const [targetChatId, setTargetChatId] = useState('default');
+
   useEffect(() => {
     if (requirement) {
       setFormData({
@@ -46,7 +49,6 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
         clientId: requirement.clientId || 'none',
         requesterId: requirement.requesterId,
         assigneeId: requirement.assigneeId,
-        // Asegurar que el formato encaje en el input datetime-local (yyyy-MM-ddThh:mm)
         deadline: requirement.deadline.includes('T') 
           ? requirement.deadline.substring(0, 16) 
           : `${requirement.deadline}T12:00`,
@@ -62,6 +64,7 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
         status: 'Pendiente'
       });
     }
+    setTargetChatId('default');
   }, [requirement, isOpen]);
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -77,7 +80,6 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
       return;
     }
 
-    // Asegurarse de que el input envía un formato seguro antes de subirlo a la DB
     const finalDeadline = formData.deadline.includes('T') 
       ? formData.deadline 
       : `${formData.deadline}T12:00`;
@@ -85,9 +87,13 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
     onSubmit({
       ...formData,
       deadline: finalDeadline,
-      clientId: formData.clientId === 'none' ? null : formData.clientId
+      clientId: formData.clientId === 'none' ? null : formData.clientId,
+      targetChatId: targetChatId === 'default' ? '' : targetChatId
     });
   };
+
+  const selectedAssignee = partners.find(p => p.id === formData.assigneeId);
+  const partnersWithChat = partners.filter(p => p.telegramChatId);
 
   return (
     <Dialog open={isOpen} onOpenChange={(v) => !v && onClose()}>
@@ -154,6 +160,35 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
             />
           </div>
 
+          {!requirement && (
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <Send className="w-4 h-4 text-blue-500" /> Notificación Telegram
+              </Label>
+              <Select value={targetChatId} onValueChange={setTargetChatId}>
+                <SelectTrigger className="bg-zinc-50 border-blue-100">
+                  <SelectValue placeholder="Seleccionar destino..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="default">Grupo Principal (Por defecto)</SelectItem>
+                  {selectedAssignee?.telegramChatId && (
+                    <SelectItem value={selectedAssignee.telegramChatId}>
+                      Privado: {selectedAssignee.name} (Asignado)
+                    </SelectItem>
+                  )}
+                  {partnersWithChat
+                    .filter(p => p.id !== selectedAssignee?.id)
+                    .map(p => (
+                      <SelectItem key={p.id} value={p.telegramChatId!}>
+                        Privado: {p.name}
+                      </SelectItem>
+                    ))
+                  }
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
           {requirement && (
             <div className="space-y-2">
               <Label>Estado</Label>
@@ -168,7 +203,7 @@ export function RequirementFormModal({ requirement, isOpen, onClose, onSubmit, i
             </div>
           )}
 
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-11 mt-4 rounded-xl" disabled={isPending}>
+          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-11 mt-4 rounded-xl shadow-lg shadow-blue-600/20" disabled={isPending}>
             {isPending ? 'Guardando...' : requirement ? 'Actualizar Requerimiento' : 'Crear y Notificar'}
           </Button>
         </form>

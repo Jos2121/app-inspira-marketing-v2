@@ -6,7 +6,7 @@ import { eq } from 'drizzle-orm';
 
 export default defineHandler(async (event) => {
   const body = await readBody(event);
-  const { content, requesterId, assigneeId, deadline, clientId } = body;
+  const { content, requesterId, assigneeId, deadline, clientId, targetChatId } = body;
 
   if (!content || !requesterId || !assigneeId || !deadline) {
     throw createError({ statusCode: 400, message: 'Faltan campos requeridos' });
@@ -36,7 +36,8 @@ export default defineHandler(async (event) => {
 
   // 3. Enviar mensaje a Telegram si las variables están configuradas
   const botToken = process.env.TELEGRAM_BOT_TOKEN;
-  const chatId = process.env.TELEGRAM_CHAT_ID;
+  // Usar el chat seleccionado o el global por defecto
+  const chatId = targetChatId || process.env.TELEGRAM_CHAT_ID;
 
   if (botToken && chatId) {
     const reqName = requester?.name || 'Desconocido';
