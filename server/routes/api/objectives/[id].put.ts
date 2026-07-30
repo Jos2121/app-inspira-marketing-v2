@@ -40,18 +40,20 @@ export default defineHandler(async (event) => {
     await db.delete(objectiveTasks).where(eq(objectiveTasks.objectiveId, id));
   }
 
-  // Insertar nuevas o actualizar existentes
+  // Insertar nuevas o actualizar existentes conservando su estado isCompleted
   for (const task of body.tasks) {
     if (task.id) {
       await db.update(objectiveTasks).set({
         title: task.title,
         partnerId: task.partnerId || null,
+        deadline: task.deadline || null,
       }).where(eq(objectiveTasks.id, task.id));
     } else {
       await db.insert(objectiveTasks).values({
         objectiveId: id,
         title: task.title,
         partnerId: task.partnerId || null,
+        deadline: task.deadline || null,
         isCompleted: false
       });
     }

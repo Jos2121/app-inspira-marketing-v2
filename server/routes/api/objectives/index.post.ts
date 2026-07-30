@@ -23,6 +23,7 @@ export default defineHandler(async (event) => {
       objectiveId: newObjective.id,
       title: task.title,
       partnerId: task.partnerId || null,
+      deadline: task.deadline || null,
       isCompleted: false
     }));
     await db.insert(objectiveTasks).values(tasksToInsert);

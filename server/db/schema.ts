@@ -203,6 +203,7 @@ export const objectiveTasks = pgTable('objective_tasks', {
   objectiveId: uuid('objective_id').notNull().references(() => objectives.id, { onDelete: 'cascade' }),
   title: text('title').notNull(),
   partnerId: uuid('partner_id').references(() => partners.id, { onDelete: 'set null' }),
+  deadline: text('deadline'),
   isCompleted: boolean('is_completed').notNull().default(false),
   createdAt: timestamp('created_at', { withTimezone: true }).defaultNow(),
 });
