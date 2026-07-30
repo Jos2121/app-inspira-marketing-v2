@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useObjectives, useDeleteObjective, Objective } from '@/hooks/useObjectives';
 import { useClients } from '@/hooks/useClients';
 import { CreateObjectiveModal } from './components/CreateObjectiveModal';
+import { EditObjectiveModal } from './components/EditObjectiveModal';
 import { ObjectiveCard } from './components/ObjectiveCard';
 import { CheckCircle2, Plus, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -13,21 +14,15 @@ export default function Objectives() {
   const { data: clients = [] } = useClients();
   const deleteMutation = useDeleteObjective();
 
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [editingObjective, setEditingObjective] = useState<Objective | null>(null);
 
   // Estados para filtros
   const [clientFilter, setClientFilter] = useState('all');
   const [monthFilter, setMonthFilter] = useState('');
 
-  const handleCreateNew = () => {
-    setEditingObjective(null);
-    setIsModalOpen(true);
-  };
-
   const handleEdit = (objective: Objective) => {
     setEditingObjective(objective);
-    setIsModalOpen(true);
   };
 
   const handleDelete = (id: string) => {
@@ -42,7 +37,6 @@ export default function Objectives() {
   // Lógica de filtrado
   const filteredObjectives = objectives.filter(obj => {
     const matchesClient = clientFilter === 'all' || obj.clientId === clientFilter;
-    // Asumimos que monthFilter tiene el formato "YYYY-MM" y deadline "YYYY-MM-DDThh:mm"
     const matchesMonth = monthFilter === '' || obj.deadline.startsWith(monthFilter);
     return matchesClient && matchesMonth;
   });
@@ -59,16 +53,23 @@ export default function Objectives() {
             Planifica y haz seguimiento de campañas, lanzamientos o metas multitaréa.
           </p>
         </div>
-        <Button onClick={handleCreateNew} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-1">
+        <Button onClick={() => setIsCreateModalOpen(true)} className="bg-blue-600 hover:bg-blue-700 text-white shadow-lg shadow-blue-600/20 transition-all hover:-translate-y-1">
           <Plus className="w-4 h-4 mr-2" /> Nuevo Objetivo
         </Button>
       </div>
 
       <CreateObjectiveModal 
-        objective={editingObjective} 
-        isOpen={isModalOpen} 
-        onClose={() => setIsModalOpen(false)} 
+        isOpen={isCreateModalOpen} 
+        onClose={() => setIsCreateModalOpen(false)} 
       />
+
+      {editingObjective && (
+        <EditObjectiveModal
+          objective={editingObjective}
+          isOpen={!!editingObjective}
+          onClose={() => setEditingObjective(null)}
+        />
+      )}
 
       {/* Barra de Filtros */}
       <div className="flex flex-col sm:flex-row gap-4 bg-white/50 p-4 rounded-2xl border border-zinc-200/60 shadow-sm justify-between items-center animate-in fade-in duration-500">

@@ -6,6 +6,7 @@ export type ObjectiveTask = {
   objectiveId: string;
   title: string;
   partnerId: string | null;
+  deadline: string | null;
   isCompleted: boolean;
   createdAt: string;
   partner?: { id: string; name: string };
@@ -35,7 +36,7 @@ export function useObjectives() {
 export function useCreateObjective() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async (data: { title: string; clientId: string; deadline: string; tasks: { title: string; partnerId: string | null }[] }) => {
+    mutationFn: async (data: { title: string; clientId: string; deadline: string; tasks: { title: string; partnerId: string | null; deadline: string }[] }) => {
       const res = await fetch('/api/objectives', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

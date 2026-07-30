@@ -4,48 +4,60 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Trash2, Target } from 'lucide-react';
+import { Trash2, Edit } from 'lucide-react';
 import { useClients } from '@/hooks/useClients';
 import { usePartners } from '@/hooks/usePartners';
-import { useCreateObjective } from '@/hooks/useObjectives';
+import { useUpdateObjective, Objective } from '@/hooks/useObjectives';
 import { toast } from 'sonner';
-import { formatDateLima } from '@/lib/date-utils';
 
-interface CreateObjectiveModalProps {
+interface EditObjectiveModalProps {
+  objective: Objective;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function CreateObjectiveModal({ isOpen, onClose }: CreateObjectiveModalProps) {
+export function EditObjectiveModal({ objective, isOpen, onClose }: EditObjectiveModalProps) {
   const { data: clients = [] } = useClients();
   const { data: partners = [] } = usePartners();
   
-  const createMutation = useCreateObjective();
+  const updateMutation = useUpdateObjective();
 
   const [title, setTitle] = useState('');
   const [clientId, setClientId] = useState('');
   const [deadline, setDeadline] = useState('');
 
-  const [tasks, setTasks] = useState<{ title: string; partnerId: string | null; deadline: string }[]>([]);
+  const [tasks, setTasks] = useState<{ id?: string, title: string; partnerId: string | null; deadline: string }[]>([]);
+  
   const [currentTaskTitle, setCurrentTaskTitle] = useState('');
   const [currentPartnerId, setCurrentPartnerId] = useState('none');
   const [currentTaskDeadline, setCurrentTaskDeadline] = useState('');
 
   useEffect(() => {
-    if (isOpen) {
-      setTitle('');
-      setClientId('');
-      setDeadline('');
-      setTasks([]);
+    if (objective && isOpen) {
+      setTitle(objective.title);
+      setClientId(objective.clientId);
+      setDeadline(objective.deadline);
+      setTasks(objective.tasks.map(t => ({ 
+        id: t.id, 
+        title: t.title, 
+        partnerId: t.partnerId, 
+        deadline: t.deadline || ''
+      })));
       setCurrentTaskTitle('');
       setCurrentPartnerId('none');
       setCurrentTaskDeadline('');
     }
-  }, [isOpen]);
+  }, [objective, isOpen]);
+
+  const handleUpdateTaskField = (index: number, field: string, value: string | null) => {
+    const newTasks = [...tasks];
+    newTasks[index] = { ...newTasks[index], [field]: value === 'none' ? null : value };
+    setTasks(newTasks);
+  };
 
   const handleAddTask = () => {
     if (!currentTaskTitle.trim() || !currentTaskDeadline) {
-      toast.error('Escribe el título y selecciona la fecha límite de la tarea');
+      toast.error('Escribe el título y la fecha límite de la tarea');
       return;
     }
     
@@ -54,7 +66,7 @@ export function CreateObjectiveModal({ isOpen, onClose }: CreateObjectiveModalPr
       { 
         title: currentTaskTitle.trim(), 
         partnerId: currentPartnerId === 'none' ? null : currentPartnerId,
-        deadline: currentTaskDeadline 
+        deadline: currentTaskDeadline
       }
     ]);
     
@@ -74,22 +86,29 @@ export function CreateObjectiveModal({ isOpen, onClose }: CreateObjectiveModalPr
       return;
     }
     if (tasks.length === 0) {
-      toast.error('Debes añadir al menos una tarea al objetivo');
+      toast.error('Debes tener al menos una tarea en el objetivo');
       return;
     }
 
-    createMutation.mutate({ title, clientId, deadline, tasks }, {
+    const hasEmptyTasks = tasks.some(t => !t.title.trim() || !t.deadline);
+    if (hasEmptyTasks) {
+      toast.error('Todas las tareas deben tener un título y una fecha límite.');
+      return;
+    }
+
+    const payload = { title, clientId, deadline, tasks };
+    updateMutation.mutate({ id: objective.id, data: payload }, {
       onSuccess: () => onClose()
     });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={(val) => !val && onClose()}>
-      <DialogContent className="sm:max-w-[650px] rounded-[2rem] max-h-[90vh] overflow-y-auto no-scrollbar">
+      <DialogContent className="sm:max-w-[700px] rounded-[2rem] max-h-[90vh] overflow-y-auto no-scrollbar">
         <DialogHeader>
           <DialogTitle className="text-xl font-bold flex items-center gap-2">
-            <Target className="w-5 h-5 text-blue-600" />
-            Crear Objetivo de Campaña
+            <Edit className="w-5 h-5 text-blue-600" />
+            Editar Objetivo de Campaña
           </DialogTitle>
         </DialogHeader>
         
@@ -99,7 +118,7 @@ export function CreateObjectiveModal({ isOpen, onClose }: CreateObjectiveModalPr
               <Label>Nombre del Objetivo *</Label>
               <Input 
                 required 
-                placeholder="Ej. Lanzamiento de Campaña de Implantes"
+                placeholder="Ej. Lanzamiento de Campaña..."
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 className="focus-visible:ring-blue-600/20 bg-zinc-50" 
@@ -133,9 +152,50 @@ export function CreateObjectiveModal({ isOpen, onClose }: CreateObjectiveModalPr
           </div>
 
           <div className="border-t border-zinc-100 pt-4 space-y-4">
-            <Label className="text-zinc-800 font-bold text-base">Lista de Tareas / Requisitos</Label>
+            <Label className="text-zinc-800 font-bold text-base">Edición de Tareas / Requisitos</Label>
             
-            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end bg-blue-50/50 p-4 rounded-2xl border border-blue-100">
+            {tasks.length > 0 && (
+              <div className="space-y-2 max-h-[300px] overflow-y-auto pr-2 no-scrollbar">
+                {tasks.map((task, idx) => (
+                  <div key={idx} className="flex flex-col sm:flex-row gap-2 items-start sm:items-center bg-white border border-zinc-200 p-2.5 rounded-xl shadow-sm">
+                    <Input 
+                      value={task.title}
+                      onChange={e => handleUpdateTaskField(idx, 'title', e.target.value)}
+                      placeholder="Título de la tarea"
+                      className="flex-1 h-9 bg-zinc-50"
+                      required
+                    />
+                    <Select value={task.partnerId || 'none'} onValueChange={v => handleUpdateTaskField(idx, 'partnerId', v)}>
+                      <SelectTrigger className="w-full sm:w-[130px] h-9 bg-zinc-50">
+                        <SelectValue placeholder="Socio..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="none">Sin asignar</SelectItem>
+                        {partners.map(p => <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    <Input 
+                      type="date"
+                      value={task.deadline}
+                      onChange={e => handleUpdateTaskField(idx, 'deadline', e.target.value)}
+                      className="w-full sm:w-[130px] h-9 bg-zinc-50"
+                      required
+                    />
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleRemoveTask(idx)}
+                      className="text-red-400 hover:text-red-600 hover:bg-red-50 h-9 w-9 shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-end bg-blue-50/50 p-4 rounded-2xl border border-blue-100 mt-4">
               <div className="space-y-2 flex-1 w-full">
                 <Label className="text-xs text-zinc-500 uppercase tracking-wider">Nueva Tarea</Label>
                 <Input 
@@ -146,7 +206,7 @@ export function CreateObjectiveModal({ isOpen, onClose }: CreateObjectiveModalPr
                   className="bg-white"
                 />
               </div>
-              <div className="space-y-2 w-full sm:w-[140px]">
+              <div className="space-y-2 w-full sm:w-[130px]">
                 <Label className="text-xs text-zinc-500 uppercase tracking-wider">Responsable</Label>
                 <Select value={currentPartnerId} onValueChange={setCurrentPartnerId}>
                   <SelectTrigger className="bg-white">
@@ -159,7 +219,7 @@ export function CreateObjectiveModal({ isOpen, onClose }: CreateObjectiveModalPr
                 </Select>
               </div>
               <div className="space-y-2 w-full sm:w-[130px]">
-                <Label className="text-xs text-zinc-500 uppercase tracking-wider">Fecha Límite *</Label>
+                <Label className="text-xs text-zinc-500 uppercase tracking-wider">Límite *</Label>
                 <Input 
                   type="date" 
                   value={currentTaskDeadline}
@@ -175,44 +235,10 @@ export function CreateObjectiveModal({ isOpen, onClose }: CreateObjectiveModalPr
                 Añadir
               </Button>
             </div>
-
-            {tasks.length > 0 && (
-              <div className="space-y-2 mt-4 max-h-[200px] overflow-y-auto pr-2 no-scrollbar">
-                {tasks.map((task, idx) => {
-                  const partner = partners.find(p => p.id === task.partnerId);
-                  // Truco para que date-fns formatee correctamente la cadena "YYYY-MM-DD"
-                  const formattedDeadline = task.deadline ? formatDateLima(new Date(task.deadline + 'T12:00:00Z'), 'dd/MM/yyyy') : '-';
-                  
-                  return (
-                    <div key={idx} className="flex items-center justify-between bg-white border border-zinc-200 p-3 rounded-xl shadow-sm">
-                      <div className="flex flex-col">
-                        <span className="text-sm font-semibold text-zinc-800">{task.title}</span>
-                        <span className="text-xs text-zinc-500">
-                          {partner ? `Resp: ${partner.name}` : 'Sin asignar'} • Límite: {formattedDeadline}
-                        </span>
-                      </div>
-                      <Button 
-                        type="button" 
-                        variant="ghost" 
-                        size="icon" 
-                        onClick={() => handleRemoveTask(idx)}
-                        className="text-red-400 hover:text-red-600 hover:bg-red-50 h-8 w-8"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-            
-            {tasks.length === 0 && (
-              <p className="text-sm text-zinc-500 text-center py-4 italic">No hay tareas agregadas. Añade las tareas que se deben cumplir.</p>
-            )}
           </div>
 
-          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-12 rounded-xl text-md shadow-lg shadow-blue-600/20 mt-4" disabled={createMutation.isPending}>
-            {createMutation.isPending ? 'Guardando...' : 'Guardar Objetivo Completo'}
+          <Button type="submit" className="w-full bg-blue-600 hover:bg-blue-700 h-12 rounded-xl text-md shadow-lg shadow-blue-600/20 mt-4" disabled={updateMutation.isPending}>
+            {updateMutation.isPending ? 'Guardando Cambios...' : 'Actualizar Objetivo'}
           </Button>
         </form>
       </DialogContent>
